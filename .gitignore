@@ -13,3 +13,9 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+# Config of edit tool, specifically when used with Goland
+.idea
+
+#package manager (dep)
+go.sum
