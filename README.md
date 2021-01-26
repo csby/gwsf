@@ -56,3 +56,7 @@ func (h initNPNRequest) ServeHTTP(rw ResponseWriter, req *Request) {
 	h.h.ServeHTTP(rw, req)
 }
 ```
+
+## Dependencies
+1. github.com/kardianos/service
+2. github.com/csby/gsecurity
