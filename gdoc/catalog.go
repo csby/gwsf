@@ -45,7 +45,7 @@ func (s *Catalog) AddChild(name string) gtype.Catalog {
 	return item
 }
 
-func (s *Catalog) AddFunction(method string, uri gtype.Uri, name string, isWebsocket bool) gtype.Function {
+func (s *Catalog) AddFunction(method string, uri gtype.Uri, name string) gtype.Function {
 	path := uri.Path()
 	item := &Catalog{Name: name}
 	item.Children = make(CatalogCollection, 0)
@@ -60,7 +60,9 @@ func (s *Catalog) AddFunction(method string, uri gtype.Uri, name string, isWebso
 		Method:      method,
 		Path:        path,
 		Name:        name,
-		IsWebsocket: isWebsocket,
+		IsWebsocket: uri.IsWebsocket(),
+		TokenUI:     uri.TokenUI(),
+		TokenCreate: uri.TokenCreate(),
 	}
 	if fuc.IsWebsocket {
 		fuc.Method = "WEBSOCKET"
@@ -73,6 +75,14 @@ func (s *Catalog) AddFunction(method string, uri gtype.Uri, name string, isWebso
 	fuc.Output = &Output{
 		Headers: make([]*Header, 0),
 		Errors:  make(ErrorCollection, 0),
+	}
+
+	if fuc.TokenUI != nil && fuc.TokenCreate != nil {
+		if uri.TokenPlace() == gtype.TokenPlaceHeader {
+			fuc.AddInputHeader(true, gtype.TokenName, gtype.TokenNote, gtype.TokenValue)
+		} else if uri.TokenPlace() == gtype.TokenPlaceQuery {
+			fuc.AddInputQuery(true, gtype.TokenName, gtype.TokenNote, gtype.TokenValue)
+		}
 	}
 
 	//fuc.SetTokenType(httpPath.TokenType())

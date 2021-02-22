@@ -21,4 +21,8 @@ type Context interface {
 	Certificate() *Certificate
 	SetHandled(v bool)
 	IsHandled() bool
+	Token() string
+	RID() uint64
+	RIP() string
+	NewGuid() string
 }

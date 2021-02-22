@@ -218,7 +218,8 @@ func (s *argument) toType(ts map[string]*Type) {
 	if n <= 0 {
 		return
 	}
-	tn := strings.ReplaceAll(strings.ReplaceAll(s.Type, "*", ""), "[]", "")
+	//tn := strings.ReplaceAll(strings.ReplaceAll(s.Type, "*", ""), "[]", "")
+	tn := strings.ReplaceAll(s.Type, "*", "")
 	if _, ok := ts[tn]; ok {
 		return
 	}

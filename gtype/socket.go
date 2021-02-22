@@ -10,13 +10,9 @@ const (
 	WSOptUserLogin  = 101 // 用户登陆
 	WSOptUserLogout = 102 // 用户注销
 
-	WSOptSiteUpload      = 111 // 上传并发布后台服务管理网站
-	WSDocSiteUpload      = 112 // 上传并发布后台接口文档网站
-	WSRootSiteUploadFile = 113 // 根站点-上传文件
-	WSRootSiteDeleteFile = 114 // 根站点-删除文件
-	WSWebappSiteUpload   = 115 // 上传并发布后应用网站
-	WSWebappSiteDelete   = 116 // 删除应用网站
-	WSCustomSiteUpload   = 119 // 上传并发布自定义网站
+	WSSiteUpload         = 110 // 上传并发布应用网站
+	WSRootSiteUploadFile = 111 // 根站点-上传文件
+	WSRootSiteDeleteFile = 112 // 根站点-删除文件
 )
 
 type SocketMessage struct {

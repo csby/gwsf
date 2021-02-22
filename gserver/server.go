@@ -92,12 +92,3 @@ func (s *server) Uninstall() error {
 
 	return s.service.Uninstall()
 }
-
-func (s *server) Status() (gtype.ServerStatus, error) {
-	status, err := s.service.Status()
-	if err != nil {
-		return gtype.ServerStatusUnknown, err
-	}
-
-	return gtype.ServerStatus(status), nil
-}

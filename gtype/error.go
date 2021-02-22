@@ -11,6 +11,15 @@ var (
 	ErrExist      = newError(5, "已存在")
 	ErrNotExist   = newError(6, "不存在")
 	ErrInput      = newError(7, "输入错误")
+
+	ErrTokenEmpty   = newError(101, "缺少凭证")
+	ErrTokenInvalid = newError(101, "凭证无效")
+	ErrTokenIllegal = newError(101, "凭证非法")
+
+	ErrLoginCaptchaInvalid           = newError(201, "验证码无效")
+	ErrLoginAccountNotExit           = newError(202, "账号不存在")
+	ErrLoginPasswordInvalid          = newError(203, "密码不正确")
+	ErrLoginAccountOrPasswordInvalid = newError(204, "账号或密码不正确")
 )
 
 type Error interface {

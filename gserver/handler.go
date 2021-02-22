@@ -21,12 +21,16 @@ func newHandler(log gtype.Log, cfg *gcfg.Config, hdl gtype.Handler) (*handler, e
 	documentEnabled := false
 	documentRoot := ""
 	serverInfo := &gtype.ServerInfo{}
+	appSiteCount := 0
 	if cfg != nil {
 		clusterIndex = cfg.Cluster.Index
 		documentEnabled = cfg.Site.Doc.Enabled
 		documentRoot = cfg.Site.Doc.Path
 		serverInfo.Name = cfg.Module.Remark
 		serverInfo.Version = cfg.Module.Version
+
+		appSiteCount = len(cfg.Site.Apps)
+		instance.router.NotFound = &notFound{root: cfg.Site.Root.Path}
 	}
 
 	instance.rid = gtype.NewRand(clusterIndex)
@@ -38,7 +42,7 @@ func newHandler(log gtype.Log, cfg *gcfg.Config, hdl gtype.Handler) (*handler, e
 		}
 	})
 
-	otpHandler := gopt.NewHandler(log, cfg, gopt.WebPath, gopt.ApiPath, gopt.AppPath)
+	otpHandler := gopt.NewHandler(log, cfg, gopt.WebPath, gopt.ApiPath, gdoc.WebPath)
 	otpHandler.Init(instance.router, func(path *gtype.Path, preHandle gtype.HttpHandle, wsc gtype.SocketChannelCollection) {
 		if hdl != nil {
 			hdl.ExtendOptApi(instance.router, path, preHandle, wsc)
@@ -63,6 +67,15 @@ func newHandler(log gtype.Log, cfg *gcfg.Config, hdl gtype.Handler) (*handler, e
 		}
 	}
 
+	for appSiteIndex := 0; appSiteIndex < appSiteCount; appSiteIndex++ {
+		appSite := cfg.Site.Apps[appSiteIndex]
+		appPath := gtype.Path{Prefix: appSite.Uri}
+		instance.router.ServeFiles(appPath.Uri("/*filepath"), nil, http.Dir(appSite.Path), nil)
+		log.Info(fmt.Sprintf("webapp [%d/%d] '%s' is ready: uri=%s, path=%s",
+			appSiteIndex+1, appSiteCount,
+			appSite.Name, appSite.Uri, appSite.Path))
+	}
+
 	return instance, nil
 }
 
@@ -85,7 +98,8 @@ func (s *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		", host=", r.Host,
 		", schema=", ctx.schema,
 		", method=", r.Method,
-		", path=", ctx.path)
+		", path=", ctx.path,
+		", token=", ctx.token)
 
 	defer func(ctx *context) {
 		ctx.leaveTime = time.Now()

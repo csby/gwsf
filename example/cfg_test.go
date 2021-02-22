@@ -31,6 +31,16 @@ var cfg = &Config{
 			Doc: gcfg.SiteDoc{
 				Enabled: true,
 			},
+			Apps: []gcfg.SiteApp{
+				{
+					Name: "App1",
+					Uri:  "/app1",
+				},
+				{
+					Name: "App2",
+					Uri:  "/app2",
+				},
+			},
 		},
 	},
 }

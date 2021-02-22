@@ -8,8 +8,12 @@ import (
 )
 
 type Path struct {
-	Prefix      string
-	IsShortPath bool
+	Prefix             string
+	IsShortPath        bool
+	DefaultIsWebsocket bool
+	DefaultTokenPlace  int
+	DefaultTokenUI     func() []TokenUI
+	DefaultTokenCreate func(items []TokenAuth, ctx Context) (string, Error)
 }
 
 func (s *Path) Uri(path string, params ...interface{}) Uri {
@@ -23,6 +27,9 @@ func (s *Path) Uri(path string, params ...interface{}) Uri {
 		rawPath:     fmt.Sprint(root, param),
 		shortPath:   fmt.Sprint(s.toShortUrl(root), param),
 		isShortPath: s.IsShortPath,
+		tokenPlace:  s.DefaultTokenPlace,
+		tokenUI:     s.DefaultTokenUI,
+		tokenCreate: s.DefaultTokenCreate,
 	}
 
 	return uri
@@ -42,6 +49,11 @@ type uriPath struct {
 	rawPath     string
 	shortPath   string
 	isShortPath bool
+	isWebsocket bool
+
+	tokenPlace  int
+	tokenUI     func() []TokenUI
+	tokenCreate func(items []TokenAuth, ctx Context) (string, Error)
 }
 
 func (s *uriPath) Path() string {
@@ -50,4 +62,40 @@ func (s *uriPath) Path() string {
 	} else {
 		return s.rawPath
 	}
+}
+
+func (s *uriPath) IsWebsocket() bool {
+	return s.isWebsocket
+}
+
+func (s *uriPath) SetIsWebsocket(isWebsocket bool) Uri {
+	s.isWebsocket = isWebsocket
+	return s
+}
+
+func (s *uriPath) TokenPlace() int {
+	return s.tokenPlace
+}
+
+func (s *uriPath) SetTokenPlace(place int) Uri {
+	s.tokenPlace = place
+	return s
+}
+
+func (s *uriPath) TokenUI() func() []TokenUI {
+	return s.tokenUI
+}
+
+func (s *uriPath) SetTokenUI(ui func() []TokenUI) Uri {
+	s.tokenUI = ui
+	return s
+}
+
+func (s *uriPath) TokenCreate() func(items []TokenAuth, ctx Context) (string, Error) {
+	return s.tokenCreate
+}
+
+func (s *uriPath) SetTokenCreate(create func(items []TokenAuth, ctx Context) (string, Error)) Uri {
+	s.tokenCreate = create
+	return s
 }

@@ -40,6 +40,34 @@ func TestArgument_FromExample_Anonymous(t *testing.T) {
 	}
 }
 
+func TestArgument_FromExample_Array(t *testing.T) {
+	a := &argument{}
+
+	example := TestArgumentArray{
+		Id: 8,
+		Items: []TestArgumentItem{
+			{
+				Name:  "zs",
+				Value: 11,
+			},
+			{
+				Name:  "ls",
+				Value: 22,
+			},
+		},
+	}
+
+	args1 := a.FromExample(example)
+	t.Logf("%v", toJson(args1))
+
+	args2 := a.FromExample(&example)
+	t.Logf("%v", toJson(args2))
+
+	if toJson(args1) != toJson(args2) {
+		t.Error("different between addr and value")
+	}
+}
+
 func toJson(v interface{}) string {
 	bytes, err := json.MarshalIndent(v, "", "    ")
 	if err != nil {
@@ -61,4 +89,14 @@ type TestArgument struct {
 	TestArgumentBase
 
 	ChildId interface{} `json:"childId" required:"true" note:"子ID"`
+}
+
+type TestArgumentItem struct {
+	Name  string `json:"name" note:"Name"`
+	Value int    `json:"value" note:"Value"`
+}
+
+type TestArgumentArray struct {
+	Id    int `json:"id"`
+	Items []TestArgumentItem
 }

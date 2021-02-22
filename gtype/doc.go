@@ -1,14 +1,17 @@
 package gtype
 
 const (
-	ContentTypeJson = "application/json"
+	ContentTypeJson     = "application/json"
+	ContentTypeFormData = "multipart/form-data"
+)
+const (
+	FormValueKindText = 0
+	FormValueKindFile = 1
 )
 
 type Function interface {
 	SetNote(v string)
 	SetRemark(v string)
-	SetTokenType(v int)
-	SetInputContentType(v string)
 	AddInputHeader(required bool, name, note, defaultValue string, optionValues ...string)
 	ClearInputHeader()
 	AddInputQuery(required bool, name, note, defaultValue string, optionValues ...string)
@@ -16,6 +19,7 @@ type Function interface {
 	AddInputForm(required bool, key, note string, valueKind int, defaultValue interface{})
 	RemoveInputForm(key string)
 	SetInputExample(v interface{})
+	SetInputJsonExample(v interface{})
 	AddOutputHeader(name, value string)
 	ClearOutputHeader()
 	SetOutputExample(v interface{})
@@ -26,7 +30,7 @@ type Function interface {
 
 type Catalog interface {
 	AddChild(name string) Catalog
-	AddFunction(method string, uri Uri, name string, isWebsocket bool) Function
+	AddFunction(method string, uri Uri, name string) Function
 }
 
 type Doc interface {

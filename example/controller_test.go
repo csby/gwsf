@@ -17,7 +17,7 @@ func (s *Controller) Hello(ctx gtype.Context, ps gtype.Params) {
 
 func (s *Controller) HelloDoc(doc gtype.Doc, method string, uri gtype.Uri) {
 	catalog := doc.AddCatalog("UnitTest").AddChild("Restful")
-	function := catalog.AddFunction(method, uri, "Hello World", false)
+	function := catalog.AddFunction(method, uri, "Hello World")
 	function.SetNote("restful api, return data with 'Hello'")
 	function.SetOutputDataExample("Hello")
 }

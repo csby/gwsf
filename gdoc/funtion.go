@@ -2,6 +2,7 @@ package gdoc
 
 import (
 	"github.com/csby/gwsf/gtype"
+	"strings"
 )
 
 var (
@@ -16,8 +17,6 @@ type Function struct {
 	Method      string  `json:"method"`      // 接口方法
 	Path        string  `json:"path"`        // 接口地址
 	FullPath    string  `json:"fullPath"`    // 接口地址
-	TokenType   int     `json:"tokenType"`   // 凭证类型
-	TokenPlace  int     `json:"tokenPlace"`  // 凭证位置: 0-header(头部); 1-query(URL参数)
 	IsWebsocket bool    `json:"isWebsocket"` // 是否为websocket接口
 	Input       *Input  `json:"input"`       // 输入
 	Output      *Output `json:"output"`      // 输出
@@ -34,17 +33,6 @@ func (s *Function) SetRemark(v string) {
 	s.Remark = v
 }
 
-func (s *Function) SetTokenType(v int) {
-	if s.TokenType == v {
-		return
-	}
-	s.TokenType = v
-}
-
-func (s *Function) SetInputContentType(v string) {
-
-}
-
 func (s *Function) AddInputHeader(required bool, name, note, defaultValue string, optionValues ...string) {
 	header := s.Input.GetHeader(name)
 	if header != nil {
@@ -52,6 +40,7 @@ func (s *Function) AddInputHeader(required bool, name, note, defaultValue string
 		header.Note = note
 		header.DefaultValue = defaultValue
 		header.Values = optionValues
+		header.Token = strings.EqualFold(name, gtype.TokenName)
 	} else {
 		s.Input.Headers = append(s.Input.Headers, &Header{
 			Name:         name,
@@ -59,6 +48,7 @@ func (s *Function) AddInputHeader(required bool, name, note, defaultValue string
 			Required:     required,
 			Values:       optionValues,
 			DefaultValue: defaultValue,
+			Token:        strings.EqualFold(name, gtype.TokenName),
 		})
 	}
 }
@@ -68,7 +58,7 @@ func (s *Function) ClearInputHeader() {
 }
 
 func (s *Function) RemoveInputHeader(name string) {
-	s.Input.ClearHeaders()
+	s.Input.RemoveHeader(name)
 }
 
 func (s *Function) AddInputQuery(required bool, name, note, defaultValue string, optionValues ...string) {
@@ -78,6 +68,7 @@ func (s *Function) AddInputQuery(required bool, name, note, defaultValue string,
 		query.Note = note
 		query.DefaultValue = defaultValue
 		query.Values = optionValues
+		query.Token = strings.EqualFold(name, gtype.TokenName)
 	} else {
 		s.Input.Queries = append(s.Input.Queries, &Query{
 			Name:         name,
@@ -85,6 +76,7 @@ func (s *Function) AddInputQuery(required bool, name, note, defaultValue string,
 			Required:     required,
 			Values:       optionValues,
 			DefaultValue: defaultValue,
+			Token:        strings.EqualFold(name, gtype.TokenName),
 		})
 	}
 }
@@ -113,6 +105,11 @@ func (s *Function) AddInputForm(required bool, key, note string, valueKind int, 
 
 func (s *Function) RemoveInputForm(key string) {
 	s.Input.RemoveForm(key)
+}
+
+func (s *Function) SetInputJsonExample(v interface{}) {
+	s.SetInputExample(v)
+	s.AddInputHeader(true, "content-type", "内容类型", gtype.ContentTypeJson, gtype.ContentTypeJson)
 }
 
 func (s *Function) SetInputExample(v interface{}) {
@@ -175,6 +172,7 @@ func (s *Function) SetOutputDataExample(v interface{}) {
 		s.Output.Model = make([]*Type, 0)
 	}
 	s.AddOutputError(gtype.ErrException)
+	s.AddOutputHeader("content-type", "application/json;charset=utf-8")
 }
 
 func (s *Function) GetInputHeader(name string) *Header {
