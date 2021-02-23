@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/csby/gwsf/gcfg"
 	"github.com/csby/gwsf/gtype"
+	"github.com/csby/wsf/file"
 	"io"
 	"io/ioutil"
 	"net/url"
@@ -291,6 +292,17 @@ func (s *Site) UploadApp(ctx gtype.Context, ps gtype.Params) {
 	}
 	defer uploadFile.Close()
 
+	buf := &bytes.Buffer{}
+	fileSize, err := buf.ReadFrom(uploadFile)
+	if err != nil {
+		ctx.Error(gtype.ErrInput, "read file error: ", err)
+		return
+	}
+	if fileSize < 1 {
+		ctx.Error(gtype.ErrInput, "invalid file: size is zero")
+		return
+	}
+
 	tempFolder := filepath.Join(filepath.Dir(appFolder), ctx.NewGuid())
 	err = os.MkdirAll(tempFolder, 0777)
 	if err != nil {
@@ -298,6 +310,18 @@ func (s *Site) UploadApp(ctx gtype.Context, ps gtype.Params) {
 		return
 	}
 	defer os.RemoveAll(tempFolder)
+
+	fileData := buf.Bytes()
+	zipFile := &file.Zip{}
+	err = zipFile.DecompressMemory(fileData, tempFolder)
+	if err != nil {
+		tarFile := &file.Tar{}
+		err = tarFile.DecompressMemory(fileData, tempFolder)
+		if err != nil {
+			ctx.Error(gtype.ErrInternal, "decompress file error: ", err)
+			return
+		}
+	}
 
 	appInfo := s.newAppInfo(id, app, ctx)
 	if len(appInfo.Guid) > 0 {

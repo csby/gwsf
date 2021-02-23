@@ -47,6 +47,7 @@ type innerHandler struct {
 	site      *controller.Site
 	monitor   *controller.Monitor
 	service   *controller.Service
+	update    *controller.Update
 	websocket *controller.Websocket
 }
 
@@ -71,6 +72,7 @@ func (s *innerHandler) mapApi(router gtype.Router, path *gtype.Path) gtype.HttpH
 	s.site = controller.NewSite(s.GetLog(), s.cfg, s.dbToken, s.wsc, s.docWebPrefix, s.webPath.Prefix)
 	s.monitor = controller.NewMonitor(s.GetLog(), s.cfg)
 	s.service = controller.NewService(s.GetLog(), s.cfg, s.svcMgr)
+	s.update = controller.NewUpdate(s.GetLog(), s.cfg, s.svcMgr)
 	s.websocket = controller.NewWebsocket(s.GetLog(), s.cfg, s.dbToken, s.wsc)
 
 	s.apiPath.DefaultTokenCreate = s.auth.CreateTokenForAccountPassword
@@ -111,6 +113,20 @@ func (s *innerHandler) mapApi(router gtype.Router, path *gtype.Path) gtype.HttpH
 		s.service.CanUpdate, s.service.CanUpdateDoc)
 	router.POST(path.Uri("/service/update"), tokenChecker,
 		s.service.Update, s.service.UpdateDoc)
+
+	// 更新管理
+	router.POST(path.Uri("/update/enable"), tokenChecker,
+		s.update.Enable, s.update.EnableDoc)
+	router.POST(path.Uri("/update/info"), tokenChecker,
+		s.update.Info, s.update.InfoDoc)
+	router.POST(path.Uri("/update/restart/enable"), tokenChecker,
+		s.update.CanRestart, s.update.CanRestartDoc)
+	router.POST(path.Uri("/update/restart"), tokenChecker,
+		s.update.Restart, s.update.RestartDoc)
+	router.POST(path.Uri("/update/upload/enable"), tokenChecker,
+		s.update.CanUpdate, s.update.CanUpdateDoc)
+	router.POST(path.Uri("/update/upload"), tokenChecker,
+		s.update.Update, s.update.UpdateDoc)
 
 	// 网站管理
 	router.POST(path.Uri("/site/root/file/list"), tokenChecker,

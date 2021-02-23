@@ -3,8 +3,6 @@ package controller
 import (
 	"github.com/csby/gwsf/gtype"
 	"os"
-	"runtime"
-	"time"
 )
 
 func (s *Service) canRestart() bool {
@@ -16,22 +14,15 @@ func (s *Service) canRestart() bool {
 		return false
 	}
 
-	if runtime.GOOS == "linux" {
-		return true
-	} else {
-		return false
-	}
+	return true
 }
 
 func (s *Service) restart(ctx gtype.Context) {
-	go func() {
-		time.Sleep(2 * time.Second)
-		err := s.cfg.Svc.Restart()
-		if err != nil {
-			s.LogError("重启服务失败:", err)
-		}
-		os.Exit(1)
-	}()
+	err := s.svcMgr.RemoteRestart(s.cfg.Svc.Name)
+	if err != nil {
+		ctx.Error(gtype.ErrInternal, err)
+		return
+	}
 
 	ctx.Success(nil)
 }
@@ -55,27 +46,14 @@ func (s *Service) update(ctx gtype.Context) {
 		return
 	}
 
-	oldBinFilePath := s.cfg.Module.Path
-	err := os.Remove(oldBinFilePath)
+	svcName := s.cfg.Svc.Name
+	svcPath := s.cfg.Module.Path
+	err := s.svcMgr.RemoteUpdate(svcName, svcPath, newBinFilePath, folder)
 	if err != nil {
+		os.RemoveAll(folder)
 		ctx.Error(gtype.ErrInternal, err)
 		return
 	}
-
-	_, err = s.copyFile(newBinFilePath, oldBinFilePath)
-	if err != nil {
-		ctx.Error(gtype.ErrInternal, err)
-		return
-	}
-
-	go func() {
-		time.Sleep(2 * time.Second)
-		err := s.cfg.Svc.Restart()
-		if err != nil {
-			s.LogError("重启服务失败:", err)
-		}
-		os.Exit(1)
-	}()
 
 	ctx.Success(nil)
 }

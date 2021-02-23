@@ -8,6 +8,11 @@ import (
 	"strings"
 )
 
+const (
+	SvcUpdModuleType = "server"
+	SvcUpdModuleName = "gwsfupd"
+)
+
 type SvcArgs struct {
 	LeftWidth int
 	Cfg       string

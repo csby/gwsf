@@ -1,4 +1,4 @@
-package example
+package test
 
 import "github.com/csby/gwsf/glog"
 

@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	svcUpdMgrUrl = "http://127.0.0.1:9606"
+	svcUpdMgrUrl = "http://127.0.0.1:9636"
 )
 
 type SvcUpdMgr struct {

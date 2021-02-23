@@ -80,7 +80,7 @@ func (s *Service) Restart(ctx gtype.Context, ps gtype.Params) {
 		return
 	}
 
-	s.restart(ctx, ps)
+	s.restart(ctx)
 }
 
 func (s *Service) RestartDoc(doc gtype.Doc, method string, uri gtype.Uri) {
@@ -107,7 +107,7 @@ func (s *Service) CanUpdateDoc(doc gtype.Doc, method string, uri gtype.Uri) {
 }
 
 func (s *Service) Update(ctx gtype.Context, ps gtype.Params) {
-	s.update(ctx, ps)
+	s.update(ctx)
 }
 
 func (s *Service) UpdateDoc(doc gtype.Doc, method string, uri gtype.Uri) {
@@ -125,7 +125,7 @@ func (s *Service) UpdateDoc(doc gtype.Doc, method string, uri gtype.Uri) {
 	function.AddOutputError(gtype.ErrTokenInvalid)
 }
 
-func (s *Service) extractUploadFile(ctx gtype.Context, ps gtype.Params) (string, string, bool) {
+func (s *Service) extractUploadFile(ctx gtype.Context) (string, string, bool) {
 	r := ctx.Request()
 	uploadFile, _, err := r.FormFile("file")
 	if err != nil {
