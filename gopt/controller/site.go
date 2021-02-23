@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/csby/gwsf/gcfg"
+	"github.com/csby/gwsf/gfile"
 	"github.com/csby/gwsf/gtype"
-	"github.com/csby/wsf/file"
 	"io"
 	"io/ioutil"
 	"net/url"
@@ -312,10 +312,10 @@ func (s *Site) UploadApp(ctx gtype.Context, ps gtype.Params) {
 	defer os.RemoveAll(tempFolder)
 
 	fileData := buf.Bytes()
-	zipFile := &file.Zip{}
+	zipFile := &gfile.Zip{}
 	err = zipFile.DecompressMemory(fileData, tempFolder)
 	if err != nil {
-		tarFile := &file.Tar{}
+		tarFile := &gfile.Tar{}
 		err = tarFile.DecompressMemory(fileData, tempFolder)
 		if err != nil {
 			ctx.Error(gtype.ErrInternal, "decompress file error: ", err)
