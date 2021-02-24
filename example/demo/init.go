@@ -13,7 +13,7 @@ import (
 
 const (
 	moduleType    = "server"
-	moduleName    = "gwsf-svc-example"
+	moduleName    = "gwsf-svc-demo"
 	moduleRemark  = "WEB服务示例"
 	moduleVersion = "1.0.1.0"
 )

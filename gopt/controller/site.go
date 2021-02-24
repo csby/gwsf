@@ -32,14 +32,14 @@ func NewSite(log gtype.Log, cfg *gcfg.Config, db gtype.TokenDatabase, chs gtype.
 
 	if cfg != nil {
 		if cfg.Site.Doc.Enabled {
-			instance.apps[instance.newGuid()] = &gcfg.SiteApp{
+			instance.apps[gtype.NewGuid()] = &gcfg.SiteApp{
 				Name: "文档网站",
 				Path: cfg.Site.Doc.Path,
 				Uri:  docPath,
 			}
 		}
 
-		instance.apps[instance.newGuid()] = &gcfg.SiteApp{
+		instance.apps[gtype.NewGuid()] = &gcfg.SiteApp{
 			Name: "管理网站",
 			Path: cfg.Site.Opt.Path,
 			Uri:  optPath,
@@ -48,7 +48,7 @@ func NewSite(log gtype.Log, cfg *gcfg.Config, db gtype.TokenDatabase, chs gtype.
 		appCount := len(cfg.Site.Apps)
 		for appIndex := 0; appIndex < appCount; appIndex++ {
 			app := cfg.Site.Apps[appIndex]
-			instance.apps[instance.newGuid()] = &gcfg.SiteApp{
+			instance.apps[gtype.NewGuid()] = &gcfg.SiteApp{
 				Name: app.Name,
 				Path: app.Path,
 				Uri:  app.Uri,
@@ -219,8 +219,8 @@ func (s *Site) GetAppsDoc(doc gtype.Doc, method string, uri gtype.Uri) {
 	function := catalog.AddFunction(method, uri, "获取网站列表")
 	function.SetNote("获取所有的应用网站ID")
 	function.SetOutputDataExample([]string{
-		s.newGuid(),
-		s.newGuid(),
+		gtype.NewGuid(),
+		gtype.NewGuid(),
 	})
 	function.AddOutputError(gtype.ErrTokenEmpty)
 	function.AddOutputError(gtype.ErrTokenInvalid)
@@ -254,10 +254,10 @@ func (s *Site) GetAppInfoDoc(doc gtype.Doc, method string, uri gtype.Uri) {
 	function.SetNote("获取指定网站网站详细信息")
 	now := gtype.DateTime(time.Now())
 	function.SetInputJsonExample(&gtype.WebAppId{
-		Id: s.newGuid(),
+		Id: gtype.NewGuid(),
 	})
 	function.SetOutputDataExample(&gtype.WebApp{
-		WebAppId:   gtype.WebAppId{Id: s.newGuid()},
+		WebAppId:   gtype.WebAppId{Id: gtype.NewGuid()},
 		Name:       "管理网站",
 		Url:        "https://example.com/opt",
 		Version:    "1.0.1.0",
@@ -359,7 +359,7 @@ func (s *Site) UploadAppDoc(doc gtype.Doc, method string, uri gtype.Uri) {
 	function.AddInputForm(true, "id", "标识ID", gtype.FormValueKindText, "")
 	function.AddInputForm(true, "file", "网站打包文件(.zip或.tar.gz)", gtype.FormValueKindFile, nil)
 	function.SetOutputDataExample(&gtype.WebApp{
-		WebAppId:   gtype.WebAppId{Id: s.newGuid()},
+		WebAppId:   gtype.WebAppId{Id: gtype.NewGuid()},
 		Name:       "管理网站",
 		Url:        "https://example.com/opt",
 		Version:    "1.0.1.0",
