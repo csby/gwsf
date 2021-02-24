@@ -44,6 +44,12 @@ func init() {
 		os.Exit(11)
 	}
 
+	if serverArgs.Pkg {
+		pkg := &Pkg{binPath: cfg.Module.Path}
+		pkg.Run()
+		os.Exit(0)
+	}
+
 	// init config
 	svcArgument := ""
 	cfgPath := serverArgs.Cfg
@@ -111,4 +117,9 @@ func init() {
 	log.Info("log level: ", cfg.Log.Level)
 	log.Info("configure path: ", cfgPath)
 	log.Info("configure info: ", cfg)
+
+	d, e := os.Getwd()
+	if e == nil {
+		log.Info("src path: ", d)
+	}
 }

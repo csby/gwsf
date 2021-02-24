@@ -23,6 +23,7 @@ type SvcArgs struct {
 	Start     bool
 	Stop      bool
 	Restart   bool
+	Pkg       bool
 }
 
 func (s *SvcArgs) Parse(key, value string) {
@@ -44,6 +45,8 @@ func (s *SvcArgs) Parse(key, value string) {
 		s.Stop = true
 	} else if key == strings.ToLower("-restart") {
 		s.Restart = true
+	} else if key == strings.ToLower("-pkg") {
+		s.Pkg = true
 	}
 }
 
@@ -57,6 +60,7 @@ func (s *SvcArgs) ShowHelp(cfgFolder, cfgName string) {
 	s.ShowLine("  -start:", "[可选]启动服务")
 	s.ShowLine("  -stop:", "[可选]停止服务")
 	s.ShowLine("  -restart:", "[可选]重启服务")
+	s.ShowLine("  -pkg:", "[可选]打包程序")
 }
 
 func (s *SvcArgs) ShowLine(label, value string) {
