@@ -87,6 +87,9 @@ func init() {
 	if cfg.Site.Doc.Path == "" {
 		cfg.Site.Doc.Path = filepath.Join(rootFolder, "site", "doc")
 	}
+	if cfg.Site.Opt.Path == "" {
+		cfg.Site.Opt.Path = filepath.Join(rootFolder, "site", "opt")
+	}
 
 	// init service
 	if strings.TrimSpace(cfg.Svc.Name) == "" {
@@ -117,9 +120,4 @@ func init() {
 	log.Info("log level: ", cfg.Log.Level)
 	log.Info("configure path: ", cfgPath)
 	log.Info("configure info: ", cfg)
-
-	d, e := os.Getwd()
-	if e == nil {
-		log.Info("src path: ", d)
-	}
 }
