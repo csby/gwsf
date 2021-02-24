@@ -36,15 +36,15 @@ type Pkg struct {
 func (s *Pkg) Run() {
 	// app
 	fmt.Println("binary file path: ", s.binPath)
-	binName := path.Base(s.binPath)
+	binFolder := filepath.Dir(s.binPath)
+	fmt.Println("binary folder path: ", binFolder)
+	_, binName := filepath.Split(s.binPath)
 	fmt.Println("binary file name: ", binName)
 	binExt := path.Ext(binName)
 	fmt.Println("binary file ext: ", binExt)
 	appName := moduleName
 	appFileName := fmt.Sprintf("%s%s", appName, binExt)
 	fmt.Println("app file name: ", appFileName)
-	binFolder := filepath.Dir(s.binPath)
-	fmt.Println("binary folder path: ", binFolder)
 
 	tmpFolder := filepath.Dir(binFolder)
 	srcFolder := filepath.Join(filepath.Dir(tmpFolder), srcPath)
@@ -82,7 +82,7 @@ func (s *Pkg) Run() {
 				},
 				Webs: []gpkg.Website{
 					{
-						Enable: true,
+						Enable: false,
 						Name:   "doc",
 						Src: gpkg.Source{
 							Root:   docFolder,
@@ -90,7 +90,7 @@ func (s *Pkg) Run() {
 						},
 					},
 					{
-						Enable: true,
+						Enable: false,
 						Name:   "opt",
 						Src: gpkg.Source{
 							Root:   optFolder,
@@ -102,11 +102,18 @@ func (s *Pkg) Run() {
 		},
 	}
 
+	cfgFolder := filepath.Join(tmpFolder, "cfg")
+	cfgName := fmt.Sprintf("%s-pkg.json", appName)
+	cfgPath := filepath.Join(cfgFolder, cfgName)
+	fmt.Println("config file path: ", cfgPath)
+	c.LoadFromFile(cfgPath)
+
 	p := gpkg.NewPacker(c)
 	e := p.Pack()
 	if e != nil {
 		fmt.Println("打包失败: ", e)
 	} else {
 		fmt.Println("打包成功: ", p.OutputFolder())
+		c.SaveToFile(cfgPath)
 	}
 }
