@@ -13,4 +13,7 @@ type WebApp struct {
 	Guid       string    `json:"guid" note:"网站ID,更新网站时将对该值进行校验,在文件site.json文件中"`
 	Version    string    `json:"version" note:"版本号,在文件site.json文件中"`
 	DeployTime *DateTime `json:"deployTime" note:"发布时间"`
+
+	DownloadTitle string `json:"downloadTitle" note:"下载连接标题"`
+	DownloadUrl   string `json:"downloadUrl" note:"下载连接地址"`
 }

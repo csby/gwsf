@@ -70,6 +70,7 @@ func init() {
 			fmt.Println("load configure file fail: ", err)
 		}
 	}
+	cfg.Path = cfgPath
 
 	// init certificate
 	if cfg.Https.Enabled {

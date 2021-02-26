@@ -5,4 +5,7 @@ type SiteOpt struct {
 	Api   SiteOptApi    `json:"api" note:"接口"`
 	Users []SiteOptUser `json:"users" note:"用户"`
 	Ldap  SiteOptLdap   `json:"ldap" note:"LDAP验证"`
+
+	DownloadTitle string `json:"downloadTitle" note:"下载连接标题"`
+	DownloadUrl   string `json:"downloadUrl" note:"下载连接地址"`
 }

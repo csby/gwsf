@@ -144,6 +144,9 @@ type SvcInfo struct {
 	Version  string   `json:"version" note:"版本号"`
 	BootTime DateTime `json:"bootTime" note:"启动时间"`
 	Remark   string   `json:"remark" note:"说明"`
+
+	DownloadTitle string `json:"downloadTitle" note:"下载连接标题"`
+	DownloadUrl   string `json:"downloadUrl" note:"下载连接地址"`
 }
 
 type SvcUpdInfo struct {

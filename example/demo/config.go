@@ -44,7 +44,9 @@ func NewConfig() *Config {
 			},
 			Site: gcfg.Site{
 				Doc: gcfg.SiteDoc{
-					Enabled: true,
+					Enabled:       true,
+					DownloadTitle: "从github下载",
+					DownloadUrl:   "https://github.com/csby/gwsf-doc/releases",
 				},
 				Opt: gcfg.SiteOpt{
 					Users: []gcfg.SiteOptUser{

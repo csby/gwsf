@@ -33,25 +33,31 @@ func NewSite(log gtype.Log, cfg *gcfg.Config, db gtype.TokenDatabase, chs gtype.
 	if cfg != nil {
 		if cfg.Site.Doc.Enabled {
 			instance.apps[gtype.NewGuid()] = &gcfg.SiteApp{
-				Name: "文档网站",
-				Path: cfg.Site.Doc.Path,
-				Uri:  docPath,
+				Name:          "文档网站",
+				Path:          cfg.Site.Doc.Path,
+				Uri:           docPath,
+				DownloadTitle: cfg.Site.Doc.DownloadTitle,
+				DownloadUrl:   cfg.Site.Doc.DownloadUrl,
 			}
 		}
 
 		instance.apps[gtype.NewGuid()] = &gcfg.SiteApp{
-			Name: "管理网站",
-			Path: cfg.Site.Opt.Path,
-			Uri:  optPath,
+			Name:          "管理网站",
+			Path:          cfg.Site.Opt.Path,
+			Uri:           optPath,
+			DownloadTitle: cfg.Site.Opt.DownloadTitle,
+			DownloadUrl:   cfg.Site.Opt.DownloadUrl,
 		}
 
 		appCount := len(cfg.Site.Apps)
 		for appIndex := 0; appIndex < appCount; appIndex++ {
 			app := cfg.Site.Apps[appIndex]
 			instance.apps[gtype.NewGuid()] = &gcfg.SiteApp{
-				Name: app.Name,
-				Path: app.Path,
-				Uri:  app.Uri,
+				Name:          app.Name,
+				Path:          app.Path,
+				Uri:           app.Uri,
+				DownloadTitle: app.DownloadTitle,
+				DownloadUrl:   app.DownloadUrl,
 			}
 		}
 	}
@@ -373,9 +379,11 @@ func (s *Site) UploadAppDoc(doc gtype.Doc, method string, uri gtype.Uri) {
 
 func (s *Site) newAppInfo(id string, app *gcfg.SiteApp, ctx gtype.Context) *gtype.WebApp {
 	info := &gtype.WebApp{
-		Name: app.Name,
-		Url:  fmt.Sprintf("%s://%s%s/", ctx.Schema(), ctx.Host(), app.Uri),
-		Root: app.Path,
+		Name:          app.Name,
+		Url:           fmt.Sprintf("%s://%s%s/", ctx.Schema(), ctx.Host(), app.Uri),
+		Root:          app.Path,
+		DownloadTitle: app.DownloadTitle,
+		DownloadUrl:   app.DownloadUrl,
 	}
 	info.Id = id
 

@@ -108,6 +108,18 @@ func (t *DateTime) GetDays(now time.Time) int64 {
 	return int64(days)
 }
 
+func (t DateTime) After(u DateTime) bool {
+	return time.Time(t).After(time.Time(u))
+}
+
+func (t DateTime) Before(u DateTime) bool {
+	return time.Time(t).Before(time.Time(u))
+}
+
+func (t DateTime) Equal(u DateTime) bool {
+	return time.Time(t).Equal(time.Time(u))
+}
+
 type Date time.Time
 
 func (t *Date) UnmarshalJSON(data []byte) (err error) {

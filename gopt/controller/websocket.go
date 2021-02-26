@@ -26,7 +26,7 @@ func NewWebsocket(log gtype.Log, cfg *gcfg.Config, db gtype.TokenDatabase, chs g
 
 	if chs != nil {
 		chs.SetListener(nil, instance.onChannelRemoved)
-		chs.AddReader(instance.onChannelRead)
+		//chs.AddReader(instance.onChannelRead)
 	}
 
 	return instance

@@ -42,6 +42,8 @@ func (s *Service) Info(ctx gtype.Context, ps gtype.Params) {
 		data.Name = cfg.Module.Name
 		data.Version = cfg.Module.Version
 		data.Remark = cfg.Module.Remark
+		data.DownloadTitle = cfg.Svc.DownloadTitle
+		data.DownloadUrl = cfg.Svc.DownloadUrl
 	}
 
 	ctx.Success(data)
