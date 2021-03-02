@@ -30,8 +30,6 @@ func (s *Handler) BeforeRouting(ctx gtype.Context) {
 		ctx.SetHandled(true)
 		return
 	}
-	origin := ctx.Request().Header.Get("Origin")
-	s.LogDebug("Origin: ", origin)
 }
 
 func (s *Handler) AfterRouting(ctx gtype.Context) {

@@ -59,7 +59,7 @@ func (s *Server) Start() error {
 			s.agent.AddRoute(route.Address, dest)
 		}
 
-		s.LogInfo(fmt.Sprintf("proxy(%d-%v): %s, %s => %s",
+		s.LogInfo(fmt.Sprintf("proxy(version=%d, tls=%v): %s, %s => %s",
 			route.Version, route.IsTls, route.Domain, route.Address, route.Target))
 	}
 

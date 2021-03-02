@@ -91,20 +91,11 @@ func (s *Monitor) GetNetworkListenPortsDoc(doc gtype.Doc, method string, uri gty
 	catalog := s.createCatalog(doc, "系统信息")
 	function := catalog.AddFunction(method, uri, "获取监听端口")
 	function.SetNote("获取主机正在监听端口信息")
-	function.SetOutputDataExample([]gmonitor.Interface{
+	function.SetOutputDataExample([]gmonitor.Listen{
 		{
-			Name:       "本地连接",
-			MTU:        1500,
-			MacAddress: "00:16:5d:13:b9:70",
-			IPAddress: []string{
-				"fe80::b1d0:ff08:1f6f:3e0b/64",
-				"192.168.1.1/24",
-			},
-			Flags: []string{
-				"up",
-				"broadcast",
-				"multicast",
-			},
+			Address:  "",
+			Port:     22,
+			Protocol: "tcp",
 		},
 	})
 	function.AddOutputError(gtype.ErrInternal)
