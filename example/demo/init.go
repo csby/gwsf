@@ -80,6 +80,19 @@ func init() {
 			cfg.Https.Cert.Server.File = certFilePath
 		}
 	}
+	if cfg.Cloud.Enabled {
+		certFilePath := cfg.Cloud.Cert.Server.File
+		if certFilePath == "" {
+			certFilePath = filepath.Join(rootFolder, "crt", "cloud.pfx")
+			cfg.Cloud.Cert.Server.File = certFilePath
+		}
+
+		certFilePath = cfg.Cloud.Cert.Ca.File
+		if certFilePath == "" {
+			certFilePath = filepath.Join(rootFolder, "crt", "ca.crt")
+			cfg.Cloud.Cert.Ca.File = certFilePath
+		}
+	}
 
 	// init path of site
 	if cfg.Site.Root.Path == "" {

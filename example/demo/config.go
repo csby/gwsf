@@ -40,6 +40,21 @@ func NewConfig() *Config {
 						Password: "",
 					},
 				},
+				RequestClientCert: false,
+			},
+			Cloud: gcfg.Https{
+				Enabled:     false,
+				Port:        3169,
+				BehindProxy: false,
+				Cert: gcfg.Crt{
+					Ca: gcfg.CrtCa{
+						File: "",
+					},
+					Server: gcfg.CrtPfx{
+						File:     "",
+						Password: "",
+					},
+				},
 				RequestClientCert: true,
 			},
 			Site: gcfg.Site{

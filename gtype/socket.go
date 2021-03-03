@@ -13,6 +13,11 @@ const (
 	WSSiteUpload         = 110 // 上传并发布应用网站
 	WSRootSiteUploadFile = 111 // 根站点-上传文件
 	WSRootSiteDeleteFile = 112 // 根站点-删除文件
+
+	WSNodeOnline          = 121 // 节点上线
+	WSNodeOffline         = 122 // 节点下线
+	WSNodeForwardRequest  = 123 // 节点转发请求
+	WSNodeForwardResponse = 124 // 节点转发响应
 )
 
 type SocketMessage struct {
@@ -34,12 +39,15 @@ type SocketChannel interface {
 	Container() SocketChannelCollection
 	Write(message *SocketMessage)
 	Read() <-chan *SocketMessage
+	WriteData(data []byte)
+	ReadData() <-chan []byte
 
 	getElement() *list.Element
 	close()
 }
 
 type innerSocketChannel struct {
+	data      chan []byte
 	channel   chan *SocketMessage
 	element   *list.Element
 	container *innerSocketChannelCollection
@@ -65,6 +73,17 @@ func (s *innerSocketChannel) Read() <-chan *SocketMessage {
 	return s.channel
 }
 
+func (s *innerSocketChannel) WriteData(data []byte) {
+	select {
+	case s.data <- data:
+	default:
+	}
+}
+
+func (s *innerSocketChannel) ReadData() <-chan []byte {
+	return s.data
+}
+
 func (s *innerSocketChannel) getElement() *list.Element {
 	return s.element
 }
@@ -79,6 +98,8 @@ type SocketChannelCollection interface {
 	NewChannel(token *Token) SocketChannel
 	Remove(channel SocketChannel)
 	Write(message *SocketMessage, token *Token)
+	WriteMessage(message *SocketMessage, tokenId string) bool
+	WriteData(data []byte, tokenId string) bool
 	AddReader(reader func(message *SocketMessage, channel SocketChannel))
 	Read(message *SocketMessage, channel SocketChannel)
 	AddFilter(filter func(message *SocketMessage, channel SocketChannel, token *Token) bool)
@@ -133,6 +154,30 @@ func (s *innerSocketChannelCollection) OnlineUsers() []*OnlineUser {
 	}
 
 	return users
+}
+
+func (s *innerSocketChannelCollection) OnlineNodes() []*Node {
+	s.Lock()
+	defer s.Unlock()
+
+	nodes := make([]*Node, 0)
+	for e := s.channels.Front(); e != nil; {
+		ev, ok := e.Value.(SocketChannel)
+		if !ok {
+			break
+		}
+
+		token := ev.Token()
+		if token != nil {
+			node := &Node{}
+			node.CopyFrom(token)
+			nodes = append(nodes, node)
+		}
+
+		e = e.Next()
+	}
+
+	return nodes
 }
 
 func (s *innerSocketChannelCollection) SetListener(newChannel, removeChannel func(channel SocketChannel)) {
@@ -196,6 +241,54 @@ func (s *innerSocketChannelCollection) Write(message *SocketMessage, token *Toke
 
 		e = e.Next()
 	}
+}
+
+func (s *innerSocketChannelCollection) WriteMessage(message *SocketMessage, tokenId string) bool {
+	s.Lock()
+	defer s.Unlock()
+
+	for e := s.channels.Front(); e != nil; {
+		ev, ok := e.Value.(SocketChannel)
+		if !ok {
+			return false
+		}
+
+		t := ev.Token()
+		if t != nil {
+			if t.ID == tokenId {
+				ev.Write(message)
+				return true
+			}
+		}
+
+		e = e.Next()
+	}
+
+	return false
+}
+
+func (s *innerSocketChannelCollection) WriteData(data []byte, tokenId string) bool {
+	s.Lock()
+	defer s.Unlock()
+
+	for e := s.channels.Front(); e != nil; {
+		ev, ok := e.Value.(SocketChannel)
+		if !ok {
+			return false
+		}
+
+		t := ev.Token()
+		if t != nil {
+			if t.ID == tokenId {
+				ev.WriteData(data)
+				return true
+			}
+		}
+
+		e = e.Next()
+	}
+
+	return false
 }
 
 func (s *innerSocketChannelCollection) AddReader(reader func(message *SocketMessage, channel SocketChannel)) {

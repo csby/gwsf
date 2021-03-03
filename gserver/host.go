@@ -19,6 +19,7 @@ type host struct {
 	httpHandler gtype.Handler
 	httpServer  *http.Server
 	httpsServer *http.Server
+	cloudServer *http.Server
 }
 
 func (s *host) Run() error {
@@ -63,6 +64,20 @@ func (s *host) Run() error {
 				}
 			}()
 		}
+
+		// cloud
+		if s.cfg.Cloud.Enabled {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				defer s.LogInfo("cloud server stopped")
+
+				err := s.runCloud(router)
+				if err != nil {
+					s.LogError("cloud server error: ", err)
+				}
+			}()
+		}
 	}
 
 	wg.Wait()
@@ -79,6 +94,13 @@ func (s *host) Close() (err error) {
 
 	if s.httpsServer != nil {
 		e := s.httpsServer.Close()
+		if e != nil {
+			err = e
+		}
+	}
+
+	if s.cloudServer != nil {
+		e := s.cloudServer.Close()
 		if e != nil {
 			err = e
 		}
@@ -156,6 +178,56 @@ func (s *host) runHttps(handler *handler) error {
 	s.LogInfo("https server running on \"", addr, "\"")
 	err = s.httpsServer.ListenAndServeTLS("", "")
 	s.httpsServer = nil
+
+	return err
+}
+
+func (s *host) runCloud(handler *handler) error {
+	defer func() {
+		if err := recover(); err != nil {
+			s.LogError("https server exception: ", err)
+		}
+	}()
+
+	caFilePath := s.cfg.Cloud.Cert.Ca.File
+	s.LogInfo("cloud server ca file: ", caFilePath)
+	pfxFilePath := s.cfg.Cloud.Cert.Server.File
+	s.LogInfo("cloud server pfx file: ", pfxFilePath)
+	pfx := &gcrt.Pfx{}
+	err := pfx.FromFile(pfxFilePath, s.cfg.Cloud.Cert.Server.Password)
+	if err != nil {
+		return fmt.Errorf("load pfx file fail: %v", err)
+	}
+	handler.serverCrt = pfx
+
+	addr := fmt.Sprintf("%s:%d", s.cfg.Cloud.Address, s.cfg.Cloud.Port)
+	s.cloudServer = &http.Server{
+		Addr:    addr,
+		Handler: handler,
+		TLSConfig: &tls.Config{
+			Certificates: pfx.TlsCertificates(),
+			ClientAuth:   tls.NoClientCert,
+		},
+	}
+	if s.cfg.Cloud.BehindProxy {
+		s.cloudServer.ProxyRemoteAddr = s.getRemoteAddr
+	}
+	if s.cfg.Cloud.RequestClientCert {
+		s.cloudServer.TLSConfig.ClientAuth = tls.RequireAndVerifyClientCert
+	}
+	if len(caFilePath) > 0 {
+		crt := &gcrt.Crt{}
+		err = crt.FromFile(caFilePath)
+		if err != nil {
+			return fmt.Errorf("load ca file fail: %v", err)
+		}
+		handler.caCrt = crt
+		s.cloudServer.TLSConfig.ClientCAs = crt.Pool()
+	}
+
+	s.LogInfo("cloud server running on \"", addr, "\"")
+	err = s.cloudServer.ListenAndServeTLS("", "")
+	s.cloudServer = nil
 
 	return err
 }
