@@ -22,6 +22,13 @@ func NewConfig() *Config {
 				Folder: "",
 				Level:  "error|warning|info",
 			},
+			Node: gcfg.Node{
+				Enabled: false,
+				CloudServer: gcfg.Cloud{
+					Address: "",
+					Port:    3169,
+				},
+			},
 			Http: gcfg.Http{
 				Enabled:     true,
 				Port:        8085,

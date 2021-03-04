@@ -94,6 +94,7 @@ func (s *innerSocketChannel) close() {
 
 type SocketChannelCollection interface {
 	OnlineUsers() []*OnlineUser
+	OnlineNodes() []*Node
 	SetListener(newChannel, removeChannel func(channel SocketChannel))
 	NewChannel(token *Token) SocketChannel
 	Remove(channel SocketChannel)

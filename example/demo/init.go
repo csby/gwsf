@@ -35,6 +35,7 @@ func init() {
 	cfg.Module.Remark = moduleRemark
 	cfg.Module.Path = moduleArgs.ModulePath()
 	cfg.Svc.BootTime = now
+	cfg.Node.InstanceId = gtype.NewGuid()
 
 	rootFolder := filepath.Dir(moduleArgs.ModuleFolder())
 	cfgFolder := filepath.Join(rootFolder, "cfg")
@@ -91,6 +92,23 @@ func init() {
 		if certFilePath == "" {
 			certFilePath = filepath.Join(rootFolder, "crt", "ca.crt")
 			cfg.Cloud.Cert.Ca.File = certFilePath
+		}
+	}
+	if cfg.Node.Enabled {
+		certFilePath := cfg.Node.Cert.Server.File
+		if certFilePath == "" {
+			certFilePath = filepath.Join(rootFolder, "crt", "node.pfx")
+			cfg.Node.Cert.Server.File = certFilePath
+		}
+
+		certFilePath = cfg.Node.Cert.Ca.File
+		if certFilePath == "" {
+			certFilePath = filepath.Join(rootFolder, "crt", "ca.crt")
+			cfg.Node.Cert.Ca.File = certFilePath
+		}
+
+		if cfg.Node.CloudServer.Port < 1 {
+			cfg.Node.CloudServer.Port = 3169
 		}
 	}
 

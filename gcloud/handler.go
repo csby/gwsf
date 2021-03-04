@@ -7,6 +7,8 @@ import (
 
 type Handler interface {
 	Init(router gtype.Router, apiExtend func(router gtype.Router, path *gtype.Path, preHandle gtype.HttpHandle, chs *Channels))
+
+	OnlineNodes() []*gtype.Node
 }
 
 func NewHandler(log gtype.Log, cfg *gcfg.Config, optChannels gtype.SocketChannelCollection) Handler {
@@ -41,10 +43,17 @@ func (s *innerHandler) Init(router gtype.Router, apiExtend func(router gtype.Rou
 	}
 	preHandle := s.controller.preHandle
 
+	router.POST(path.Uri("/node/list/online"), preHandle,
+		s.controller.GetOnlineNodes, s.controller.GetOnlineNodesDoc)
+
 	router.GET(path.Uri("/node/connect").SetIsWebsocket(true), preHandle,
 		s.controller.NodeConnect, s.controller.NodeConnectDoc)
 
 	if apiExtend != nil {
 		apiExtend(router, path, preHandle, s.chs)
 	}
+}
+
+func (s *innerHandler) OnlineNodes() []*gtype.Node {
+	return s.chs.onlineNodes.OnlineNodes()
 }

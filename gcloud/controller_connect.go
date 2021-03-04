@@ -2,6 +2,7 @@ package gcloud
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/csby/gwsf/gtype"
 	"github.com/gorilla/websocket"
 	"sync"
@@ -9,6 +10,13 @@ import (
 )
 
 func (s *Controller) NodeConnect(ctx gtype.Context, ps gtype.Params) {
+	instaceId := ctx.Query("instance")
+	if len(instaceId) < 1 {
+		ctx.Error(gtype.ErrNotSupport, fmt.Errorf("instance id of note is empty"))
+		ctx.SetHandled(true)
+		return
+	}
+
 	websocketConn, err := s.wsGrader.Upgrade(ctx.Response(), ctx.Request(), nil)
 	if err != nil {
 		s.LogError("node connect socket connect fail:", err)
@@ -20,12 +28,16 @@ func (s *Controller) NodeConnect(ctx gtype.Context, ps gtype.Params) {
 	now := time.Now()
 	crt := ctx.Certificate().Client
 	token := &gtype.Token{
-		ID:          crt.OrganizationalUnit(),
+		ID:          instaceId,
 		UserAccount: crt.Organization(),
 		UserName:    crt.CommonName(),
 		LoginIP:     ctx.RIP(),
 		LoginTime:   now,
 		ActiveTime:  now,
+		Ext: gtype.NodeId{
+			Instance:    instaceId,
+			Certificate: crt.OrganizationalUnit(),
+		},
 	}
 	channel := s.chs.OnlineNodes().NewChannel(token)
 	defer s.chs.onlineNodes.Remove(channel)
@@ -109,10 +121,11 @@ func (s *Controller) NodeConnect(ctx gtype.Context, ps gtype.Params) {
 }
 
 func (s *Controller) NodeConnectDoc(doc gtype.Doc, method string, uri gtype.Uri) {
-	catalog := s.createCatalog(doc, "Websocket")
+	catalog := s.createCatalog(doc, "节点服务")
 	function := catalog.AddFunction(method, uri, "交互推送")
 	function.SetNote("接收或发送节点的交互信息，该接口保持阻塞至连接关闭")
 	function.SetRemark("该接口需要客户端证书")
+	function.AddInputQuery(true, "instance", "节点实例ID", "")
 	function.SetInputExample(&gtype.SocketMessage{ID: 1})
 	function.SetOutputExample(&gtype.SocketMessage{ID: 2})
 	function.AddOutputError(gtype.ErrInternal)
