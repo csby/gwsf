@@ -16,10 +16,9 @@ func NewHandler(log gtype.Log, cfg *gcfg.Config, optChannels gtype.SocketChannel
 	instance.SetLog(log)
 	instance.cfg = cfg
 	instance.chs = &Channels{
-		opt:          optChannels,
-		onlineNodes:  gtype.NewSocketChannelCollection(),
-		fwdRequests:  gtype.NewSocketChannelCollection(),
-		fwdResponses: gtype.NewSocketChannelCollection(),
+		opt:     optChannels,
+		node:    gtype.NewSocketChannelCollection(),
+		forward: gtype.NewSocketChannelCollection(),
 	}
 	instance.controller = NewController(log, cfg, instance.chs)
 
@@ -45,9 +44,13 @@ func (s *innerHandler) Init(router gtype.Router, apiExtend func(router gtype.Rou
 
 	router.POST(path.Uri("/node/list/online"), preHandle,
 		s.controller.GetOnlineNodes, s.controller.GetOnlineNodesDoc)
-
 	router.GET(path.Uri("/node/connect").SetIsWebsocket(true), preHandle,
 		s.controller.NodeConnect, s.controller.NodeConnectDoc)
+
+	router.GET(path.Uri("/fwd/request").SetIsWebsocket(true), preHandle,
+		s.controller.NodeForwardRequest, s.controller.NodeForwardRequestDoc)
+	router.GET(path.Uri("/fwd/response").SetIsWebsocket(true), preHandle,
+		s.controller.NodeForwardResponse, s.controller.NodeForwardResponseDoc)
 
 	if apiExtend != nil {
 		apiExtend(router, path, preHandle, s.chs)
@@ -55,5 +58,5 @@ func (s *innerHandler) Init(router gtype.Router, apiExtend func(router gtype.Rou
 }
 
 func (s *innerHandler) OnlineNodes() []*gtype.Node {
-	return s.chs.onlineNodes.OnlineNodes()
+	return s.chs.node.OnlineNodes()
 }

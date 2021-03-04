@@ -6,7 +6,6 @@ import (
 	"github.com/csby/gwsf/gcfg"
 	"github.com/csby/gwsf/gtype"
 	"github.com/gorilla/websocket"
-	"net/http"
 	"net/url"
 	"sync"
 	"time"
@@ -16,14 +15,13 @@ type Cloud interface {
 	Connect() error
 }
 
-func NewCloud(log gtype.Log, cfg *gcfg.Config) Cloud {
+func NewCloud(log gtype.Log, cfg *gcfg.Config, dialer *websocket.Dialer, chs *Channels) Cloud {
 	instance := &innerCloud{}
 	instance.SetLog(log)
 	instance.cfg = cfg
-
-	instance.nodeChannels = gtype.NewSocketChannelCollection()
-	instance.nodeChannel = instance.nodeChannels.NewChannel(nil)
-	instance.init()
+	instance.chs = chs
+	instance.nodeChannel = instance.chs.node.NewChannel(nil)
+	instance.dialer = dialer
 
 	return instance
 }
@@ -31,27 +29,11 @@ func NewCloud(log gtype.Log, cfg *gcfg.Config) Cloud {
 type innerCloud struct {
 	gtype.Base
 
-	cfg          *gcfg.Config
-	isConnected  bool
-	dialer       *websocket.Dialer
-	nodeChannels gtype.SocketChannelCollection
-	nodeChannel  gtype.SocketChannel
-}
-
-func (s *innerCloud) init() {
-	if s.cfg == nil {
-		return
-	}
-
-	crt := &Certificate{}
-	crt.SetLog(s.GetLog())
-	crt.Load(&s.cfg.Node.Cert)
-
-	s.dialer = &websocket.Dialer{
-		Proxy:            http.ProxyFromEnvironment,
-		HandshakeTimeout: 45 * time.Second,
-		TLSClientConfig:  crt.ClientTlsConfig(),
-	}
+	cfg         *gcfg.Config
+	isConnected bool
+	dialer      *websocket.Dialer
+	chs         *Channels
+	nodeChannel gtype.SocketChannel
 }
 
 func (s *innerCloud) Connect() error {
@@ -69,10 +51,11 @@ func (s *innerCloud) Connect() error {
 	}
 
 	u := url.URL{
-		Scheme: "wss",
-		Host:   fmt.Sprintf("%s:%d", s.cfg.Node.CloudServer.Address, s.cfg.Node.CloudServer.Port),
-		Path:   "/cloud.api/node/connect"}
-	u.Query().Add("instance", s.cfg.Node.InstanceId)
+		Scheme:   "wss",
+		Host:     fmt.Sprintf("%s:%d", s.cfg.Node.CloudServer.Address, s.cfg.Node.CloudServer.Port),
+		Path:     "/cloud.api/node/connect",
+		RawQuery: fmt.Sprintf("instance=%s", s.cfg.Node.InstanceId),
+	}
 
 	go s.doConnect(u.String())
 
@@ -158,7 +141,7 @@ func (s *innerCloud) connect(url string) {
 					if err != nil {
 						s.LogError("node connect socket unmarshal read message from server error:", err)
 					} else {
-						s.nodeChannels.Read(msg, ch)
+						s.chs.node.Read(msg, ch)
 					}
 				}
 			}

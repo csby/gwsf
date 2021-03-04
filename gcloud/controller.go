@@ -90,3 +90,21 @@ func (s *Controller) writeOptSocketMessage(id int, data interface{}) bool {
 
 	return true
 }
+
+func (s *Controller) writeNodeSocketMessage(token string, id int, data interface{}) bool {
+	if s.chs == nil {
+		return false
+	}
+	if s.chs.node == nil {
+		return false
+	}
+
+	msg := &gtype.SocketMessage{
+		ID:   id,
+		Data: data,
+	}
+
+	s.chs.node.WriteMessage(msg, token)
+
+	return true
+}

@@ -10,10 +10,9 @@ import (
 )
 
 func (s *Controller) NodeConnect(ctx gtype.Context, ps gtype.Params) {
-	instaceId := ctx.Query("instance")
-	if len(instaceId) < 1 {
+	instanceId := ctx.Query("instance")
+	if len(instanceId) < 1 {
 		ctx.Error(gtype.ErrNotSupport, fmt.Errorf("instance id of note is empty"))
-		ctx.SetHandled(true)
 		return
 	}
 
@@ -28,19 +27,19 @@ func (s *Controller) NodeConnect(ctx gtype.Context, ps gtype.Params) {
 	now := time.Now()
 	crt := ctx.Certificate().Client
 	token := &gtype.Token{
-		ID:          instaceId,
+		ID:          crt.OrganizationalUnit(),
 		UserAccount: crt.Organization(),
 		UserName:    crt.CommonName(),
 		LoginIP:     ctx.RIP(),
 		LoginTime:   now,
 		ActiveTime:  now,
 		Ext: gtype.NodeId{
-			Instance:    instaceId,
+			Instance:    instanceId,
 			Certificate: crt.OrganizationalUnit(),
 		},
 	}
-	channel := s.chs.OnlineNodes().NewChannel(token)
-	defer s.chs.onlineNodes.Remove(channel)
+	channel := s.chs.node.NewChannel(token)
+	defer s.chs.node.Remove(channel)
 
 	node := &gtype.Node{}
 	node.CopyFrom(token)
@@ -110,7 +109,7 @@ func (s *Controller) NodeConnect(ctx gtype.Context, ps gtype.Params) {
 					if err != nil {
 						s.LogError("node connect socket unmarshal read message error:", err)
 					} else {
-						s.chs.onlineNodes.Read(msg, ch)
+						s.chs.node.Read(msg, ch)
 					}
 				}
 			}
@@ -122,7 +121,7 @@ func (s *Controller) NodeConnect(ctx gtype.Context, ps gtype.Params) {
 
 func (s *Controller) NodeConnectDoc(doc gtype.Doc, method string, uri gtype.Uri) {
 	catalog := s.createCatalog(doc, "节点服务")
-	function := catalog.AddFunction(method, uri, "交互推送")
+	function := catalog.AddFunction(method, uri, "节点登录")
 	function.SetNote("接收或发送节点的交互信息，该接口保持阻塞至连接关闭")
 	function.SetRemark("该接口需要客户端证书")
 	function.AddInputQuery(true, "instance", "节点实例ID", "")

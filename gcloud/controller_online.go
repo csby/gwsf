@@ -6,7 +6,7 @@ import (
 )
 
 func (s *Controller) GetOnlineNodes(ctx gtype.Context, ps gtype.Params) {
-	ctx.Success(s.chs.onlineNodes.OnlineNodes())
+	ctx.Success(s.chs.node.OnlineNodes())
 }
 
 func (s *Controller) GetOnlineNodesDoc(doc gtype.Doc, method string, uri gtype.Uri) {

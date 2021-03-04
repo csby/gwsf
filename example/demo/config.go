@@ -28,6 +28,10 @@ func NewConfig() *Config {
 					Address: "",
 					Port:    3169,
 				},
+				Forward: gcfg.NodeFwd{
+					Enable: false,
+					Tcp:    []*gcfg.Fwd{},
+				},
 			},
 			Http: gcfg.Http{
 				Enabled:     true,
