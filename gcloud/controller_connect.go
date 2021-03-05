@@ -70,10 +70,7 @@ func (s *Controller) NodeConnect(ctx gtype.Context, ps gtype.Params) {
 					return
 				}
 
-				err := conn.WriteJSON(msg)
-				if err != nil {
-					s.LogError("node connect socket write message error:", err)
-				}
+				conn.WriteJSON(msg)
 			}
 		}
 	}(waitGroup, websocketConn, channel)
@@ -96,7 +93,6 @@ func (s *Controller) NodeConnect(ctx gtype.Context, ps gtype.Params) {
 			default:
 				msgType, msgContent, err := conn.ReadMessage()
 				if err != nil {
-					s.LogError("node connect socket read message error:", err)
 					return
 				}
 				if msgType == websocket.CloseMessage {
@@ -106,9 +102,7 @@ func (s *Controller) NodeConnect(ctx gtype.Context, ps gtype.Params) {
 				if msgType == websocket.TextMessage || msgType == websocket.BinaryMessage {
 					msg := &gtype.SocketMessage{}
 					err := json.Unmarshal(msgContent, msg)
-					if err != nil {
-						s.LogError("node connect socket unmarshal read message error:", err)
-					} else {
+					if err == nil {
 						s.chs.node.Read(msg, ch)
 					}
 				}

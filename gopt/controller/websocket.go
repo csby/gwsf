@@ -82,10 +82,7 @@ func (s *Websocket) Notify(ctx gtype.Context, ps gtype.Params) {
 					return
 				}
 
-				err := conn.WriteJSON(msg)
-				if err != nil {
-					s.LogError("notify subscribe socket write message error:", err)
-				}
+				conn.WriteJSON(msg)
 			}
 		}
 	}(waitGroup, websocketConn, channel)
@@ -108,7 +105,6 @@ func (s *Websocket) Notify(ctx gtype.Context, ps gtype.Params) {
 			default:
 				msgType, msgContent, err := conn.ReadMessage()
 				if err != nil {
-					s.LogError("notify subscribe socket read message error:", err)
 					return
 				}
 				if msgType == websocket.CloseMessage {
@@ -118,9 +114,7 @@ func (s *Websocket) Notify(ctx gtype.Context, ps gtype.Params) {
 				if msgType == websocket.TextMessage || msgType == websocket.BinaryMessage {
 					msg := &gtype.SocketMessage{}
 					err := json.Unmarshal(msgContent, msg)
-					if err != nil {
-						s.LogError("notify subscribe socket unmarshal read message error:", err)
-					} else {
+					if err == nil {
 						s.wsChannels.Read(msg, ch)
 					}
 				}
