@@ -15,3 +15,7 @@ type Config struct {
 
 	Site Site `json:"site" note:"站点配置"`
 }
+
+func (s *Config) InitId() {
+	s.Node.InitId()
+}

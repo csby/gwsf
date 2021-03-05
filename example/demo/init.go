@@ -72,6 +72,7 @@ func init() {
 		}
 	}
 	cfg.Path = cfgPath
+	cfg.InitId()
 
 	// init certificate
 	if cfg.Https.Enabled {
