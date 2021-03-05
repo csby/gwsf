@@ -7,3 +7,7 @@ type Node struct {
 	Cert        Crt     `json:"cert" note:"证书"`
 	Forward     NodeFwd `json:"fwd" note:"转发配置"`
 }
+
+func (s *Node) InitId() {
+	s.Forward.InitId()
+}
