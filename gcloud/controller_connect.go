@@ -27,7 +27,7 @@ func (s *Controller) NodeConnect(ctx gtype.Context, ps gtype.Params) {
 	now := time.Now()
 	crt := ctx.Certificate().Client
 	token := &gtype.Token{
-		ID:          crt.OrganizationalUnit(),
+		ID:          instanceId,
 		UserAccount: crt.Organization(),
 		UserName:    crt.CommonName(),
 		LoginIP:     ctx.RIP(),
@@ -120,11 +120,11 @@ func (s *Controller) NodeConnect(ctx gtype.Context, ps gtype.Params) {
 }
 
 func (s *Controller) NodeConnectDoc(doc gtype.Doc, method string, uri gtype.Uri) {
-	catalog := s.createCatalog(doc, "节点服务")
-	function := catalog.AddFunction(method, uri, "节点登录")
-	function.SetNote("接收或发送节点的交互信息，该接口保持阻塞至连接关闭")
+	catalog := s.createCatalog(doc, "结点服务")
+	function := catalog.AddFunction(method, uri, "结点登录")
+	function.SetNote("接收或发送结点的交互信息，该接口保持阻塞至连接关闭")
 	function.SetRemark("该接口需要客户端证书")
-	function.AddInputQuery(true, "instance", "节点实例ID", "")
+	function.AddInputQuery(true, "instance", "结点实例ID", "")
 	function.SetInputExample(&gtype.SocketMessage{ID: 1})
 	function.SetOutputExample(&gtype.SocketMessage{ID: 2})
 	function.AddOutputError(gtype.ErrInternal)

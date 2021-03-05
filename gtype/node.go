@@ -6,10 +6,10 @@ type NodeId struct {
 }
 
 type Node struct {
-	ID        NodeId   `json:"id" note:"节点标识ID"`
-	Kind      string   `json:"kind" note:"节点类型, 如: client"`
-	Name      string   `json:"name" note:"节点名称"`
-	IP        string   `json:"ip" note:"节点IP地址"`
+	ID        NodeId   `json:"id" note:"结点标识ID"`
+	Kind      string   `json:"kind" note:"结点类型, 如: client"`
+	Name      string   `json:"name" note:"结点名称"`
+	IP        string   `json:"ip" note:"结点IP地址"`
 	LoginTime DateTime `json:"loginTime" note:"登陆时间"`
 }
 

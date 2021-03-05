@@ -6,6 +6,7 @@ import (
 	"github.com/csby/gwsf/gcfg"
 	"github.com/csby/gwsf/gtype"
 	"github.com/gorilla/websocket"
+	"io"
 	"net/url"
 	"sync"
 	"time"
@@ -36,6 +37,10 @@ type innerCloud struct {
 	nodeChannel gtype.SocketChannel
 }
 
+func (s *innerCloud) IsConnected() bool {
+	return s.isConnected
+}
+
 func (s *innerCloud) Connect() error {
 	if s.cfg == nil {
 		return fmt.Errorf("config is nil")
@@ -57,26 +62,31 @@ func (s *innerCloud) Connect() error {
 		RawQuery: fmt.Sprintf("instance=%s", s.cfg.Node.InstanceId),
 	}
 
-	go s.doConnect(u.String())
+	go s.doConnect(u.String(), u.Host)
 
 	return nil
 }
 
-func (s *innerCloud) doConnect(url string) {
+func (s *innerCloud) doConnect(uri, host string) {
 	for {
 		time.Sleep(time.Second)
 
-		s.connect(url)
+		s.connect(uri, host)
 	}
 }
 
-func (s *innerCloud) connect(url string) {
-	websocketConn, _, err := s.dialer.Dial(url, nil)
+func (s *innerCloud) connect(uri, host string) {
+	websocketConn, _, err := s.dialer.Dial(uri, nil)
 	if err != nil {
-		s.LogError("node connect to server fail:", err)
 		return
 	}
-	defer websocketConn.Close()
+	defer func(conn io.Closer, h string) {
+		s.isConnected = false
+		conn.Close()
+		s.LogInfo("node has been disconnected from cloud: ", h)
+	}(websocketConn, host)
+	s.LogInfo("node has been connected to cloud: ", host)
+	s.isConnected = true
 
 	waitGroup := &sync.WaitGroup{}
 	stopWrite := make(chan bool, 2)
@@ -88,7 +98,6 @@ func (s *innerCloud) connect(url string) {
 		defer wg.Done()
 		defer func() {
 			if err := recover(); err != nil {
-				s.LogError("node connect send message to server error:", err)
 			}
 			stopRead <- true
 		}()
@@ -104,7 +113,7 @@ func (s *innerCloud) connect(url string) {
 
 				err := conn.WriteJSON(msg)
 				if err != nil {
-					s.LogError("node connect send message to server error:", err)
+					return
 				}
 			}
 		}
@@ -116,7 +125,6 @@ func (s *innerCloud) connect(url string) {
 		defer wg.Done()
 		defer func() {
 			if err := recover(); err != nil {
-				s.LogError("node connect read message from server error:", err)
 			}
 			stopWrite <- true
 		}()
@@ -128,7 +136,6 @@ func (s *innerCloud) connect(url string) {
 			default:
 				msgType, msgContent, err := conn.ReadMessage()
 				if err != nil {
-					s.LogError("node connect read message from server error:", err)
 					return
 				}
 				if msgType == websocket.CloseMessage {
@@ -138,9 +145,7 @@ func (s *innerCloud) connect(url string) {
 				if msgType == websocket.TextMessage || msgType == websocket.BinaryMessage {
 					msg := &gtype.SocketMessage{}
 					err := json.Unmarshal(msgContent, msg)
-					if err != nil {
-						s.LogError("node connect socket unmarshal read message from server error:", err)
-					} else {
+					if err == nil {
 						s.chs.node.Read(msg, ch)
 					}
 				}
@@ -149,8 +154,4 @@ func (s *innerCloud) connect(url string) {
 	}(waitGroup, websocketConn, s.nodeChannel)
 
 	waitGroup.Wait()
-}
-
-func (s *innerCloud) setConnected(isConnected bool) {
-	s.isConnected = isConnected
 }

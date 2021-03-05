@@ -57,11 +57,12 @@ func (s *innerForward) Start() {
 		}
 
 		input := &gfwd.Input{
-			Dialer: s.dialer,
 			Remote: s.cfg.Node.CloudServer,
 		}
 		fwd.CopyTo(&input.Local)
 		input.SetLog(s.GetLog())
+		input.Dialer = s.dialer
+		input.InstanceID = s.cfg.Node.InstanceId
 
 		s.inputs = append(s.inputs, input)
 		input.Start()
@@ -120,15 +121,16 @@ func (s *innerForward) readNodeMessage(message *gtype.SocketMessage, channel gty
 		return
 	}
 
-	if message.ID != gtype.WSNodeForwardRequest {
+	if message.ID != gtype.WSNodeForwardStart {
 		return
 	}
 	if message.Data == nil {
 		return
 	}
 
-	fwd, ok := message.Data.(*gtype.Forward)
-	if !ok {
+	fwd := &gtype.ForwardRequest{}
+	err := message.GetData(fwd)
+	if err != nil {
 		return
 	}
 	if fwd.NodeInstanceID != s.cfg.Node.InstanceId {
@@ -137,10 +139,10 @@ func (s *innerForward) readNodeMessage(message *gtype.SocketMessage, channel gty
 
 	output := &gfwd.Output{
 		Remote: s.cfg.Node.CloudServer,
-		Dialer: s.dialer,
 	}
 	fwd.CopyTo(&output.Target)
 	output.SetLog(s.GetLog())
+	output.Dialer = s.dialer
 
 	output.Start()
 }

@@ -5,9 +5,8 @@ import (
 )
 
 type Channels struct {
-	opt     gtype.SocketChannelCollection
-	node    gtype.SocketChannelCollection
-	forward gtype.SocketChannelCollection
+	opt  gtype.SocketChannelCollection
+	node gtype.SocketChannelCollection
 }
 
 func (s *Channels) Opt() gtype.SocketChannelCollection {
@@ -16,8 +15,4 @@ func (s *Channels) Opt() gtype.SocketChannelCollection {
 
 func (s *Channels) Node() gtype.SocketChannelCollection {
 	return s.node
-}
-
-func (s *Channels) Forward() gtype.SocketChannelCollection {
-	return s.forward
 }

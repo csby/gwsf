@@ -5,6 +5,7 @@ import (
 	"github.com/csby/gwsf/gcfg"
 	"github.com/csby/gwsf/gtype"
 	"github.com/gorilla/websocket"
+	"io"
 	"net/http"
 )
 
@@ -14,7 +15,8 @@ type Controller struct {
 	cfg *gcfg.Config
 	chs *Channels
 
-	wsGrader websocket.Upgrader
+	wsGrader    websocket.Upgrader
+	fwdChannels *ForwardChannelCollection
 }
 
 func NewController(log gtype.Log, cfg *gcfg.Config, chs *Channels) *Controller {
@@ -23,6 +25,9 @@ func NewController(log gtype.Log, cfg *gcfg.Config, chs *Channels) *Controller {
 	instance.cfg = cfg
 	instance.chs = chs
 	instance.wsGrader = websocket.Upgrader{CheckOrigin: instance.checkOrigin}
+	instance.fwdChannels = &ForwardChannelCollection{
+		channels: make(map[string]*ForwardChannel),
+	}
 
 	return instance
 }
@@ -107,4 +112,36 @@ func (s *Controller) writeNodeSocketMessage(token string, id int, data interface
 	s.chs.node.WriteMessage(msg, token)
 
 	return true
+}
+
+func (s *Controller) goCloseConn(conn io.Closer) {
+	if conn == nil {
+		return
+	}
+
+	go conn.Close()
+}
+
+func (s *Controller) connCopy(ch chan<- error, dst *websocket.Conn, src *websocket.Conn) (err error) {
+	for {
+		t, d, er := src.ReadMessage()
+		if er != nil {
+			err = er
+			break
+		}
+		if t == websocket.CloseMessage {
+			err = io.ErrShortWrite
+			break
+		}
+
+		ew := dst.WriteMessage(websocket.BinaryMessage, d)
+		if ew != nil {
+			err = ew
+			break
+		}
+	}
+
+	ch <- err
+
+	return err
 }

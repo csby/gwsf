@@ -4,93 +4,36 @@ import (
 	"fmt"
 	"github.com/csby/gwsf/gcfg"
 	"github.com/csby/gwsf/gtype"
-	"github.com/gorilla/websocket"
-	"io"
 	"net"
 	"net/url"
-	"sync"
 )
 
 type Output struct {
-	gtype.Base
+	forward
 
 	Remote gcfg.Cloud
-	Target gtype.Forward
-
-	Dialer *websocket.Dialer
+	Target gtype.ForwardRequest
 }
 
 func (s *Output) Start() {
 	go s.run()
 }
 
-func (s *Output) forwardConnect(conn net.Conn) {
-	defer conn.Close()
-
-	websocketAddr := s.socketUrl()
-	websocketConn, _, err := s.Dialer.Dial(websocketAddr, nil)
+func (s *Output) forwardConnect(dst net.Conn) {
+	addr := s.socketUrl()
+	src, _, err := s.Dialer.Dial(addr, nil)
 	if err != nil {
-		s.LogError("fwd output connect to server fail:", err)
+		dst.Close()
+		s.LogError("fwd output connect to cloud fail:", err)
 		return
 	}
-	defer websocketConn.Close()
+	defer s.goCloseConn(dst)
+	defer s.goCloseConn(src)
 
-	waitGroup := &sync.WaitGroup{}
-	stopWrite := make(chan bool, 2)
-	stopRead := make(chan bool, 2)
-
-	scrConn := &SocketConnection{
-		Conn: websocketConn,
-	}
-	// write message
-	waitGroup.Add(1)
-	go func(wg *sync.WaitGroup, dst net.Conn, src *SocketConnection) {
-		defer wg.Done()
-		defer func() {
-			if err := recover(); err != nil {
-				s.LogError("fwd input write error:", err)
-			}
-			stopRead <- true
-		}()
-
-		for {
-			select {
-			case <-stopWrite:
-				return
-			default:
-				_, err := io.Copy(dst, src)
-				if err != nil {
-					return
-				}
-			}
-		}
-	}(waitGroup, conn, scrConn)
-
-	// read message
-	waitGroup.Add(1)
-	go func(wg *sync.WaitGroup, src net.Conn, dst *SocketConnection) {
-		defer wg.Done()
-		defer func() {
-			if err := recover(); err != nil {
-				s.LogError("fwd input write error:", err)
-			}
-			stopWrite <- true
-		}()
-
-		for {
-			select {
-			case <-stopRead:
-				return
-			default:
-				_, err := io.Copy(dst, src)
-				if err != nil {
-					return
-				}
-			}
-		}
-	}(waitGroup, conn, scrConn)
-
-	waitGroup.Wait()
+	ch := make(chan error, 1)
+	go s.copySocketToTcp(ch, dst, src)
+	go s.copyTcpToSocket(ch, src, dst)
+	err = <-ch
 }
 
 func (s *Output) run() {
@@ -103,7 +46,7 @@ func (s *Output) run() {
 	addr := fmt.Sprintf("%s:%s", s.Target.TargetAddress, s.Target.TargetPort)
 	conn, err := net.Dial("tcp", addr)
 	if err != nil {
-		s.LogError("fwd output fail: ", err)
+		s.LogError("fwd output connect to target fail: ", err)
 		return
 	}
 
@@ -115,7 +58,7 @@ func (s *Output) socketUrl() string {
 		Scheme:   "wss",
 		Host:     fmt.Sprintf("%s:%d", s.Remote.Address, s.Remote.Port),
 		Path:     "/cloud.api/fwd/response",
-		RawQuery: fmt.Sprintf("request=%s&response=%s", s.Target.RequestID, s.Target.ResponseID),
+		RawQuery: fmt.Sprintf("id=%s", s.Target.ID),
 	}
 
 	return u.String()

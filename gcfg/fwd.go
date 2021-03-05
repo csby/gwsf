@@ -7,8 +7,8 @@ type Fwd struct {
 	ListenAddress string `json:"listenAddress" note:"监听地址"`
 	ListenPort    int    `json:"listenPort" note:"监听端口"`
 
-	TargetNodeID   string `json:"targetNodeId" note:"目标节点ID"`
-	TargetNodeName string `json:"targetNodeName" note:"目标节点名称"`
+	TargetNodeID   string `json:"targetNodeId" note:"目标结点ID"`
+	TargetNodeName string `json:"targetNodeName" note:"目标结点名称"`
 
 	TargetAddress string `json:"targetAddress" note:"监听地址"`
 	TargetPort    int    `json:"targetPort" note:"监听端口"`

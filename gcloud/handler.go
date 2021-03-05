@@ -9,6 +9,7 @@ type Handler interface {
 	Init(router gtype.Router, apiExtend func(router gtype.Router, path *gtype.Path, preHandle gtype.HttpHandle, chs *Channels))
 
 	OnlineNodes() []*gtype.Node
+	OnlineForwards(filter *gtype.ForwardInfoFilter) gtype.ForwardInfoArray
 }
 
 func NewHandler(log gtype.Log, cfg *gcfg.Config, optChannels gtype.SocketChannelCollection) Handler {
@@ -16,9 +17,8 @@ func NewHandler(log gtype.Log, cfg *gcfg.Config, optChannels gtype.SocketChannel
 	instance.SetLog(log)
 	instance.cfg = cfg
 	instance.chs = &Channels{
-		opt:     optChannels,
-		node:    gtype.NewSocketChannelCollection(),
-		forward: gtype.NewSocketChannelCollection(),
+		opt:  optChannels,
+		node: gtype.NewSocketChannelCollection(),
 	}
 	instance.controller = NewController(log, cfg, instance.chs)
 
@@ -59,4 +59,8 @@ func (s *innerHandler) Init(router gtype.Router, apiExtend func(router gtype.Rou
 
 func (s *innerHandler) OnlineNodes() []*gtype.Node {
 	return s.chs.node.OnlineNodes()
+}
+
+func (s *innerHandler) OnlineForwards(filter *gtype.ForwardInfoFilter) gtype.ForwardInfoArray {
+	return s.controller.fwdChannels.Lst(filter)
 }

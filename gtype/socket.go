@@ -14,12 +14,10 @@ const (
 	WSRootSiteUploadFile = 111 // 根站点-上传文件
 	WSRootSiteDeleteFile = 112 // 根站点-删除文件
 
-	WSNodeOnline             = 121 // 节点上线
-	WSNodeOffline            = 122 // 节点下线
-	WSNodeForwardRequest     = 123 // 节点转发请求
-	WSNodeForwardResponse    = 124 // 节点转发响应
-	WSNodeForwardRequestEnd  = 125 // 节点转发请求
-	WSNodeForwardResponseEnd = 126 // 节点转发响应
+	WSNodeOnline       = 121 // 结点上线
+	WSNodeOffline      = 122 // 结点下线
+	WSNodeForwardStart = 123 // 结点转发开始
+	WSNodeForwardEnd   = 124 // 结点转发结束
 )
 
 type SocketMessage struct {
@@ -39,20 +37,14 @@ func (s *SocketMessage) GetData(v interface{}) error {
 type SocketChannel interface {
 	Token() *Token
 	Container() SocketChannelCollection
-	Stop()
-	IsStop() <-chan bool
 	Write(message *SocketMessage)
 	Read() <-chan *SocketMessage
-	WriteData(data []byte)
-	ReadData() <-chan []byte
 
 	getElement() *list.Element
 	close()
 }
 
 type innerSocketChannel struct {
-	stop      chan bool
-	data      chan []byte
 	channel   chan *SocketMessage
 	element   *list.Element
 	container *innerSocketChannelCollection
@@ -67,17 +59,6 @@ func (s *innerSocketChannel) Container() SocketChannelCollection {
 	return s.container
 }
 
-func (s *innerSocketChannel) Stop() {
-	select {
-	case s.stop <- true:
-	default:
-	}
-}
-
-func (s *innerSocketChannel) IsStop() <-chan bool {
-	return s.stop
-}
-
 func (s *innerSocketChannel) Write(message *SocketMessage) {
 	select {
 	case s.channel <- message:
@@ -89,39 +70,23 @@ func (s *innerSocketChannel) Read() <-chan *SocketMessage {
 	return s.channel
 }
 
-func (s *innerSocketChannel) WriteData(data []byte) {
-	select {
-	case s.data <- data:
-	default:
-	}
-}
-
-func (s *innerSocketChannel) ReadData() <-chan []byte {
-	return s.data
-}
-
 func (s *innerSocketChannel) getElement() *list.Element {
 	return s.element
 }
 
 func (s *innerSocketChannel) close() {
-	close(s.stop)
-	close(s.data)
 	close(s.channel)
 }
 
 type SocketChannelCollection interface {
 	OnlineUsers() []*OnlineUser
 	OnlineNodes() []*Node
-	OnlineNode(tokenId string) *Node
+	OnlineNode(id NodeId) *Node
 	SetListener(newChannel, removeChannel func(channel SocketChannel))
 	NewChannel(token *Token) SocketChannel
-	ChannelExist(tokenId string) bool
-	Get(tokenId string) SocketChannel
 	Remove(channel SocketChannel)
 	Write(message *SocketMessage, token *Token)
 	WriteMessage(message *SocketMessage, tokenId string) bool
-	WriteData(data []byte, tokenId string) bool
 	AddReader(reader func(message *SocketMessage, channel SocketChannel))
 	Read(message *SocketMessage, channel SocketChannel)
 	AddFilter(filter func(message *SocketMessage, channel SocketChannel, token *Token) bool)
@@ -202,7 +167,7 @@ func (s *innerSocketChannelCollection) OnlineNodes() []*Node {
 	return nodes
 }
 
-func (s *innerSocketChannelCollection) OnlineNode(tokenId string) *Node {
+func (s *innerSocketChannelCollection) OnlineNode(id NodeId) *Node {
 	s.Lock()
 	defer s.Unlock()
 
@@ -214,9 +179,23 @@ func (s *innerSocketChannelCollection) OnlineNode(tokenId string) *Node {
 
 		token := ev.Token()
 		if token != nil {
-			node := &Node{}
-			node.CopyFrom(token)
-			return node
+			if len(id.Instance) > 0 {
+				if id.Instance == token.ID {
+					node := &Node{}
+					node.CopyFrom(token)
+					return node
+				}
+			} else if len(id.Certificate) > 0 {
+				nodeId, ok := token.Ext.(NodeId)
+				if ok {
+					if id.Certificate == nodeId.Certificate {
+						node := &Node{}
+						node.CopyFrom(token)
+						return node
+					}
+				}
+			}
+
 		}
 
 		e = e.Next()
@@ -236,9 +215,6 @@ func (s *innerSocketChannelCollection) NewChannel(token *Token) SocketChannel {
 
 	instance := &innerSocketChannel{container: s}
 	instance.channel = make(chan *SocketMessage, 1024)
-	instance.stop = make(chan bool, 1024)
-	instance.data = make(chan []byte, 1024)
-	instance.channel = make(chan *SocketMessage, 1024)
 	instance.element = s.channels.PushBack(instance)
 	instance.token = token
 	if token != nil {
@@ -250,52 +226,6 @@ func (s *innerSocketChannelCollection) NewChannel(token *Token) SocketChannel {
 	}
 
 	return instance
-}
-
-func (s *innerSocketChannelCollection) ChannelExist(tokenId string) bool {
-	s.Lock()
-	defer s.Unlock()
-
-	for e := s.channels.Front(); e != nil; {
-		ev, ok := e.Value.(SocketChannel)
-		if !ok {
-			return false
-		}
-
-		t := ev.Token()
-		if t != nil {
-			if t.ID == tokenId {
-				return true
-			}
-		}
-
-		e = e.Next()
-	}
-
-	return false
-}
-
-func (s *innerSocketChannelCollection) Get(tokenId string) SocketChannel {
-	s.Lock()
-	defer s.Unlock()
-
-	for e := s.channels.Front(); e != nil; {
-		ev, ok := e.Value.(SocketChannel)
-		if !ok {
-			return nil
-		}
-
-		t := ev.Token()
-		if t != nil {
-			if t.ID == tokenId {
-				return ev
-			}
-		}
-
-		e = e.Next()
-	}
-
-	return nil
 }
 
 func (s *innerSocketChannelCollection) Remove(channel SocketChannel) {
@@ -317,30 +247,6 @@ func (s *innerSocketChannelCollection) Remove(channel SocketChannel) {
 
 	s.channels.Remove(channel.getElement())
 	channel.close()
-}
-
-func (s *innerSocketChannelCollection) Stop(tokenId string) bool {
-	s.Lock()
-	defer s.Unlock()
-
-	for e := s.channels.Front(); e != nil; {
-		ev, ok := e.Value.(SocketChannel)
-		if !ok {
-			return false
-		}
-
-		t := ev.Token()
-		if t != nil {
-			if t.ID == tokenId {
-				ev.Stop()
-				return true
-			}
-		}
-
-		e = e.Next()
-	}
-
-	return false
 }
 
 func (s *innerSocketChannelCollection) Write(message *SocketMessage, token *Token) {
@@ -375,30 +281,6 @@ func (s *innerSocketChannelCollection) WriteMessage(message *SocketMessage, toke
 		if t != nil {
 			if t.ID == tokenId {
 				ev.Write(message)
-				return true
-			}
-		}
-
-		e = e.Next()
-	}
-
-	return false
-}
-
-func (s *innerSocketChannelCollection) WriteData(data []byte, tokenId string) bool {
-	s.Lock()
-	defer s.Unlock()
-
-	for e := s.channels.Front(); e != nil; {
-		ev, ok := e.Value.(SocketChannel)
-		if !ok {
-			return false
-		}
-
-		t := ev.Token()
-		if t != nil {
-			if t.ID == tokenId {
-				ev.WriteData(data)
 				return true
 			}
 		}

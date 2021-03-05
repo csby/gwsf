@@ -7,7 +7,7 @@ type Config struct {
 	Log     Log     `json:"log" note:"日志"`
 	Svc     Svc     `json:"svc" note:"系统服务"`
 	Cluster Cluster `json:"cluster" note:"集群配置"`
-	Node    Node    `json:"node" note:"节点配置"`
+	Node    Node    `json:"node" note:"结点配置"`
 	Http    Http    `json:"http" note:"HTTP服务"`
 	Https   Https   `json:"https" note:"HTTPS服务"`
 	Cloud   Https   `json:"cloud" note:"云服务"`

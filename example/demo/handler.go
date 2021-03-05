@@ -56,4 +56,6 @@ func (s *Handler) ExtendOptApi(router gtype.Router, path *gtype.Path, preHandle 
 
 	router.POST(path.Uri("/node/list/online"), preHandle,
 		s.apiController.GetOnlineNodes, s.apiController.GetOnlineNodesDoc)
+	router.POST(path.Uri("/forward/list/online"), preHandle,
+		s.apiController.GetForwardNodes, s.apiController.GetForwardNodesDoc)
 }
