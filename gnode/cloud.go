@@ -21,7 +21,7 @@ func NewCloud(log gtype.Log, cfg *gcfg.Config, dialer *websocket.Dialer, chs *Ch
 	instance.SetLog(log)
 	instance.cfg = cfg
 	instance.chs = chs
-	instance.nodeChannel = instance.chs.node.NewChannel(nil)
+	instance.nodeChannel = instance.chs.node.NewChannel(&gtype.Token{ID: cfg.Node.InstanceId})
 	instance.dialer = dialer
 
 	return instance

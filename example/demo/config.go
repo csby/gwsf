@@ -31,6 +31,7 @@ func NewConfig() *Config {
 				Forward: gcfg.NodeFwd{
 					Enable: false,
 					Tcp:    []*gcfg.Fwd{},
+					Udp:    []*gcfg.Fwd{},
 				},
 			},
 			Http: gcfg.Http{

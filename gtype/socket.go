@@ -14,10 +14,12 @@ const (
 	WSRootSiteUploadFile = 111 // 根站点-上传文件
 	WSRootSiteDeleteFile = 112 // 根站点-删除文件
 
-	WSNodeOnline       = 121 // 结点上线
-	WSNodeOffline      = 122 // 结点下线
-	WSNodeForwardStart = 123 // 结点转发开始
-	WSNodeForwardEnd   = 124 // 结点转发结束
+	WSNodeOnline             = 121 // 结点上线
+	WSNodeOffline            = 122 // 结点下线
+	WSNodeForwardTcpStart    = 123 // 结点转发TCP开始
+	WSNodeForwardTcpEnd      = 124 // 结点转发TCP结束
+	WSNodeForwardUdpRequest  = 125 // 结点转发UDP请求
+	WSNodeForwardUdpResponse = 126 // 结点转发UDP响应
 )
 
 type SocketMessage struct {

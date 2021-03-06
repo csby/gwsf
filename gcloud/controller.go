@@ -29,6 +29,12 @@ func NewController(log gtype.Log, cfg *gcfg.Config, chs *Channels) *Controller {
 		channels: make(map[string]*ForwardChannel),
 	}
 
+	if chs != nil {
+		if chs.node != nil {
+			chs.node.AddReader(instance.readNodeMessage)
+		}
+	}
+
 	return instance
 }
 

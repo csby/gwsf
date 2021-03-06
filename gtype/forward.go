@@ -109,3 +109,20 @@ func (s *ForwardInfoFilter) match(link *ForwardInfo) bool {
 
 	return true
 }
+
+type ForwardUdpResponse struct {
+	ForwardId
+
+	SourceNodeInstanceID string `json:"sourceId" note:"发起结点实例ID"`
+	SourceAddress        string `json:"sourceAddr" note:"发起地址"`
+
+	Data []byte `json:"data" note:"数据"`
+}
+
+type ForwardUdpRequest struct {
+	ForwardUdpResponse
+
+	TargetNodeCertificateID string `json:"targetCertId" note:"目标结点证书ID"`
+	TargetNodeInstanceID    string `json:"targetInstId" note:"目标结点实例ID"`
+	TargetAddress           string `json:"targetAddr" note:"目标地址"`
+}

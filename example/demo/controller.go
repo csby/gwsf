@@ -29,7 +29,7 @@ func (s *Controller) GetOnlineNodes(ctx gtype.Context, ps gtype.Params) {
 }
 
 func (s *Controller) GetOnlineNodesDoc(doc gtype.Doc, method string, uri gtype.Uri) {
-	catalog := doc.AddCatalog("管理平台接口").AddChild("结点管理")
+	catalog := doc.AddCatalog("管理平台接口").AddChild("云端服务").AddChild("结点管理")
 	function := catalog.AddFunction(method, uri, "获取在线结点")
 	function.SetNote("获取当前所有在线列表")
 	function.SetOutputDataExample([]*gtype.Node{
@@ -56,8 +56,8 @@ func (s *Controller) GetForwardNodes(ctx gtype.Context, ps gtype.Params) {
 }
 
 func (s *Controller) GetForwardNodesDoc(doc gtype.Doc, method string, uri gtype.Uri) {
-	catalog := doc.AddCatalog("管理平台接口").AddChild("结点管理")
-	function := catalog.AddFunction(method, uri, "获取转发连接")
+	catalog := doc.AddCatalog("管理平台接口").AddChild("云端服务").AddChild("结点管理")
+	function := catalog.AddFunction(method, uri, "获取结点转发连接")
 	function.SetNote("获取当前所有正在转发的连接列表")
 	function.SetInputJsonExample(&gtype.ForwardInfoFilter{})
 	function.SetOutputDataExample([]*gtype.ForwardInfo{

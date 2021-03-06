@@ -62,7 +62,7 @@ func (s *Controller) NodeForwardRequest(ctx gtype.Context, ps gtype.Params) {
 	defer s.fwdChannels.Del(channel.ID)
 	defer s.goCloseConn(conn)
 
-	s.writeNodeSocketMessage(targetNode.ID.Instance, gtype.WSNodeForwardStart, &gtype.ForwardRequest{
+	s.writeNodeSocketMessage(targetNode.ID.Instance, gtype.WSNodeForwardTcpStart, &gtype.ForwardRequest{
 		ForwardId:      gtype.ForwardId{ID: channel.ID},
 		NodeInstanceID: targetNode.ID.Instance,
 		TargetAddress:  targetAddr,
@@ -71,8 +71,8 @@ func (s *Controller) NodeForwardRequest(ctx gtype.Context, ps gtype.Params) {
 
 	fwdInfo := &gtype.ForwardInfo{}
 	channel.CopyTo(fwdInfo)
-	s.writeOptSocketMessage(gtype.WSNodeForwardStart, fwdInfo)
-	defer s.writeOptSocketMessage(gtype.WSNodeForwardEnd, &fwdInfo.ForwardId)
+	s.writeOptSocketMessage(gtype.WSNodeForwardTcpStart, fwdInfo)
+	defer s.writeOptSocketMessage(gtype.WSNodeForwardTcpEnd, &fwdInfo.ForwardId)
 
 	select {
 	case dstConn := <-channel.DstConn:
@@ -137,4 +137,57 @@ func (s *Controller) NodeForwardResponseDoc(doc gtype.Doc, method string, uri gt
 	function.SetOutputExample(&gtype.SocketMessage{ID: 2})
 	function.AddOutputError(gtype.ErrInternal)
 	function.AddOutputError(gtype.ErrTokenInvalid)
+}
+
+func (s *Controller) readNodeMessage(message *gtype.SocketMessage, channel gtype.SocketChannel) {
+	if message == nil {
+		return
+	}
+
+	if message.Data == nil {
+		return
+	}
+
+	if message.ID == gtype.WSNodeForwardUdpRequest {
+		fwd := &gtype.ForwardUdpRequest{}
+		err := message.GetData(fwd)
+		if err == nil {
+			go s.forwardUdpRequest(fwd)
+		}
+	} else if message.ID == gtype.WSNodeForwardUdpResponse {
+		fwd := &gtype.ForwardUdpResponse{}
+		err := message.GetData(fwd)
+		if err == nil {
+			go s.forwardUdpResponse(fwd)
+		}
+	}
+}
+
+func (s *Controller) forwardUdpRequest(request *gtype.ForwardUdpRequest) {
+	if nil == request {
+		return
+	}
+
+	if len(request.TargetNodeCertificateID) < 1 {
+		return
+	}
+	targetNode := s.chs.node.OnlineNode(gtype.NodeId{Certificate: request.TargetNodeCertificateID})
+	if targetNode == nil {
+		return
+	}
+	request.TargetNodeInstanceID = targetNode.ID.Instance
+
+	s.writeNodeSocketMessage(targetNode.ID.Instance, gtype.WSNodeForwardUdpRequest, request)
+}
+
+func (s *Controller) forwardUdpResponse(response *gtype.ForwardUdpResponse) {
+	if nil == response {
+		return
+	}
+
+	if len(response.SourceNodeInstanceID) < 1 {
+		return
+	}
+
+	s.writeNodeSocketMessage(response.SourceNodeInstanceID, gtype.WSNodeForwardUdpResponse, response)
 }
