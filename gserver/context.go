@@ -180,6 +180,10 @@ func (s *context) Path() string {
 	return s.path
 }
 
+func (s *context) Queries() gtype.QueryCollection {
+	return s.queries
+}
+
 func (s *context) Certificate() *gtype.Certificate {
 	return &s.certificate
 }

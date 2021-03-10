@@ -18,6 +18,7 @@ type Context interface {
 	Schema() string
 	Host() string
 	Path() string
+	Queries() QueryCollection
 	Certificate() *Certificate
 	SetHandled(v bool)
 	IsHandled() bool
