@@ -42,6 +42,8 @@ func (s *innerHandler) Init(router gtype.Router, apiExtend func(router gtype.Rou
 	}
 	preHandle := s.controller.preHandle
 
+	router.POST(path.Uri("/node/service/info"), preHandle,
+		s.controller.GetNodeServiceInfo, s.controller.GetNodeServiceInfoDoc)
 	router.POST(path.Uri("/node/list/online"), preHandle,
 		s.controller.GetOnlineNodes, s.controller.GetOnlineNodesDoc)
 	router.GET(path.Uri("/node/connect").SetIsWebsocket(true), preHandle,

@@ -9,6 +9,7 @@ import (
 const (
 	timeFormat = "2006-01-02 15:04:05"
 	dateFormat = "2006-01-02"
+	zoneFormat = "2006-01-02T15:04:05.000Z"
 )
 
 type DateTime time.Time
@@ -21,6 +22,8 @@ func (t *DateTime) UnmarshalJSON(data []byte) (err error) {
 		now, err = time.ParseInLocation(`"`+dateFormat+`"`, string(data), time.Local)
 	} else if dataLen == len(timeFormat)+2 {
 		now, err = time.ParseInLocation(`"`+timeFormat+`"`, string(data), time.Local)
+	} else if dataLen == len(zoneFormat)+2 {
+		now, err = time.ParseInLocation(`"`+zoneFormat+`"`, string(data), time.UTC)
 	} else {
 		now, err = time.Parse(time.RFC3339, string(data))
 	}
@@ -130,6 +133,8 @@ func (t *Date) UnmarshalJSON(data []byte) (err error) {
 		now, err = time.ParseInLocation(`"`+dateFormat+`"`, string(data), time.Local)
 	} else if dataLen == len(timeFormat)+2 {
 		now, err = time.ParseInLocation(`"`+timeFormat+`"`, string(data), time.Local)
+	} else if dataLen == len(zoneFormat)+2 {
+		now, err = time.ParseInLocation(`"`+zoneFormat+`"`, string(data), time.UTC)
 	} else {
 		now, err = time.Parse(time.RFC3339, string(data))
 	}

@@ -26,4 +26,11 @@ type Context interface {
 	RID() uint64
 	RIP() string
 	NewGuid() string
+
+	Set(key string, val interface{})
+	Get(key string) (interface{}, bool)
+	Del(key string) bool
+
+	ClientOrganization() string
+	SetClientOrganization(ou string)
 }

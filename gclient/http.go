@@ -22,6 +22,7 @@ func (s *Http) Get(url string, headers ...Header) (output []byte, connState *tls
 		err = e
 		return
 	}
+	req.Close = true
 	headerCount := len(headers)
 	for i := 0; i < headerCount; i++ {
 		header := headers[i]
@@ -71,6 +72,7 @@ func (s *Http) PostJson(url string, argument interface{}, headers ...Header) (in
 		err = e
 		return
 	}
+	req.Close = true
 	req.Header.Set("Content-Type", "application/json;charset=utf-8")
 	headerCount := len(headers)
 	for i := 0; i < headerCount; i++ {
@@ -124,6 +126,7 @@ func (s *Http) PostXml(url string, argument interface{}, headers ...Header) (inp
 		err = e
 		return
 	}
+	req.Close = true
 	req.Header.Set("Content-Type", "application/xml;charset=utf-8")
 	headerCount := len(headers)
 	for i := 0; i < headerCount; i++ {
@@ -170,6 +173,7 @@ func (s *Http) PostSoap(url string, argument interface{}, headers ...Header) (in
 		err = e
 		return
 	}
+	req.Close = true
 	req.Header.Set("Content-Type", "application/soap+xml;charset=utf-8")
 	headerCount := len(headers)
 	for i := 0; i < headerCount; i++ {

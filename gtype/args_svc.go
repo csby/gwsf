@@ -149,6 +149,16 @@ type SvcInfo struct {
 	DownloadUrl   string `json:"downloadUrl" note:"下载连接地址"`
 }
 
+type SvcCloudInfo struct {
+	Name     string   `json:"name" note:"服务名称"`
+	Version  string   `json:"version" note:"版本号"`
+	BootTime DateTime `json:"bootTime" note:"启动时间"`
+	Remark   string   `json:"remark" note:"说明"`
+
+	ServerOU string `json:"sou" note:"服务器标识"`
+	ClientOU string `json:"cou" note:"客户端标识"`
+}
+
 type SvcUpdInfo struct {
 	Name     string    `json:"name" note:"服务名称"`
 	Version  string    `json:"version" note:"版本号"`

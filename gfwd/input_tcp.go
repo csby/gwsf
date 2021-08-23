@@ -52,16 +52,26 @@ func (s *InputTcp) run() {
 		if err := recover(); err != nil {
 			s.LogError("fwd tcp input listen error: ", err)
 		}
+		s.setIsRunning(false)
 	}()
 
+	s.lastError = ""
 	addr := fmt.Sprintf("%s:%d", s.Local.ListenAddress, s.Local.ListenPort)
 	l, err := net.Listen("tcp", addr)
 	if err != nil {
+		s.lastError = err.Error()
 		s.LogError("fwd tcp input listen fail: ", err)
 		return
 	}
 	s.listener = l
-	defer s.close()
+	defer func() {
+		s.close()
+		s.LogInfo(fmt.Sprintf("forward tcp input(id=%s) is closed, router: '%s:%d' => '%s(%s)' => '%s:%d'",
+			s.Local.ID,
+			s.Local.ListenAddress, s.Local.ListenPort,
+			s.Local.TargetNodeName, s.Local.TargetNodeID,
+			s.Local.TargetAddress, s.Local.TargetPort))
+	}()
 
 	s.LogInfo(fmt.Sprintf("forward tcp input(id=%s) is ready, router: '%s' => '%s(%s)' => '%s:%d'",
 		s.Local.ID,
@@ -69,6 +79,7 @@ func (s *InputTcp) run() {
 		s.Local.TargetNodeName, s.Local.TargetNodeID,
 		s.Local.TargetAddress, s.Local.TargetPort))
 
+	s.setIsRunning(true)
 	for {
 		c, err := l.Accept()
 		if err != nil {
@@ -87,12 +98,6 @@ func (s *InputTcp) close() {
 
 	s.listener.Close()
 	s.listener = nil
-
-	s.LogInfo(fmt.Sprintf("forward tcp input(id=%s) is closed, router: '%s:%d' => '%s(%s)' => '%s:%d'",
-		s.Local.ID,
-		s.Local.ListenAddress, s.Local.ListenPort,
-		s.Local.TargetNodeName, s.Local.TargetNodeID,
-		s.Local.TargetAddress, s.Local.TargetPort))
 }
 
 func (s *InputTcp) socketUrl() string {

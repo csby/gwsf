@@ -106,7 +106,8 @@ func GetLoginPage(appId, redirectUri, state string) (*LoginPage, error) {
 	}
 
 	info := &LoginPage{}
-	info.Url = fmt.Sprintf("%s?appid=%s&redirect_uri=%s&response_type=%s&&scope=%s&state=%s\"",
+	info.State = state
+	info.Url = fmt.Sprintf("%s?appid=%s&redirect_uri=%s&response_type=%s&&scope=%s&state=%s",
 		urlAuth,
 		appId,
 		url.QueryEscape(redirectUri),
@@ -114,7 +115,7 @@ func GetLoginPage(appId, redirectUri, state string) (*LoginPage, error) {
 		"snsapi_userinfo",
 		state)
 
-	code, err := qr.Encode(info.Url, qr.H, qr.Auto)
+	code, err := qr.Encode(info.Url, qr.M, qr.Auto)
 	if err == nil {
 		var buf bytes.Buffer
 		err = png.Encode(&buf, code)

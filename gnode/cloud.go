@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/csby/gwsf/gcfg"
+	"github.com/csby/gwsf/gclient"
 	"github.com/csby/gwsf/gtype"
 	"github.com/gorilla/websocket"
 	"io"
+	"net/http"
 	"net/url"
 	"sync"
 	"time"
@@ -14,10 +16,15 @@ import (
 
 type Cloud interface {
 	Connect() error
+	IsConnected() bool
+	SetState(state func(isConnected bool))
+	PostJson(uri string, argument interface{}) *gtype.Result
 }
 
 func NewCloud(log gtype.Log, cfg *gcfg.Config, dialer *websocket.Dialer, chs *Channels) Cloud {
-	instance := &innerCloud{}
+	instance := &innerCloud{
+		isConnected: false,
+	}
 	instance.SetLog(log)
 	instance.cfg = cfg
 	instance.chs = chs
@@ -35,10 +42,16 @@ type innerCloud struct {
 	dialer      *websocket.Dialer
 	chs         *Channels
 	nodeChannel gtype.SocketChannel
+
+	state func(isConnected bool)
 }
 
 func (s *innerCloud) IsConnected() bool {
 	return s.isConnected
+}
+
+func (s *innerCloud) SetState(state func(isConnected bool)) {
+	s.state = state
 }
 
 func (s *innerCloud) Connect() error {
@@ -81,12 +94,12 @@ func (s *innerCloud) connect(uri, host string) {
 		return
 	}
 	defer func(conn io.Closer, h string) {
-		s.isConnected = false
+		s.setConnected(false)
 		conn.Close()
 		s.LogInfo("node has been disconnected from cloud: ", h)
 	}(websocketConn, host)
 	s.LogInfo("node has been connected to cloud: ", host)
-	s.isConnected = true
+	s.setConnected(true)
 
 	waitGroup := &sync.WaitGroup{}
 	stopWrite := make(chan bool, 2)
@@ -154,4 +167,57 @@ func (s *innerCloud) connect(uri, host string) {
 	}(waitGroup, websocketConn, s.nodeChannel)
 
 	waitGroup.Wait()
+}
+
+func (s *innerCloud) setConnected(isConnected bool) {
+	if s.isConnected == isConnected {
+		return
+	}
+	s.isConnected = isConnected
+
+	if s.state != nil {
+		go func() {
+			defer func() {
+				if err := recover(); err != nil {
+				}
+			}()
+			s.state(s.isConnected)
+		}()
+	}
+}
+
+func (s *innerCloud) PostJson(uri string, argument interface{}) *gtype.Result {
+	u := url.URL{
+		Scheme: "https",
+		Host:   fmt.Sprintf("%s:%d", s.cfg.Node.CloudServer.Address, s.cfg.Node.CloudServer.Port),
+		Path:   fmt.Sprintf("/cloud.api%s", uri),
+	}
+
+	c := &gclient.Http{}
+	if s.dialer != nil {
+		c.Transport = &http.Transport{
+			TLSClientConfig: s.dialer.TLSClientConfig,
+		}
+	}
+
+	r := &gtype.Result{}
+	_, output, _, code, err := c.PostJson(u.String(), argument)
+	if code != 200 {
+		r.Code = gtype.ErrInternal.Code()
+		r.Error.Summary = gtype.ErrInternal.Summary()
+		r.Error.Detail = fmt.Sprintf("cloud response code = %d for '%s' request", code, u.Path)
+	} else if err != nil {
+		r.Code = gtype.ErrInternal.Code()
+		r.Error.Summary = gtype.ErrInternal.Summary()
+		r.Error.Detail = err.Error()
+	} else {
+		err = r.Unmarshal(output)
+		if err != nil {
+			r.Code = gtype.ErrInternal.Code()
+			r.Error.Summary = gtype.ErrInternal.Summary()
+			r.Error.Detail = err.Error()
+		}
+	}
+
+	return r
 }

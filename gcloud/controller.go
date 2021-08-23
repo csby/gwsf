@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/websocket"
 	"io"
 	"net/http"
+	"time"
 )
 
 type Controller struct {
@@ -17,6 +18,8 @@ type Controller struct {
 
 	wsGrader    websocket.Upgrader
 	fwdChannels *ForwardChannelCollection
+
+	bootTime time.Time
 }
 
 func NewController(log gtype.Log, cfg *gcfg.Config, chs *Channels) *Controller {
@@ -33,6 +36,12 @@ func NewController(log gtype.Log, cfg *gcfg.Config, chs *Channels) *Controller {
 		if chs.node != nil {
 			chs.node.AddReader(instance.readNodeMessage)
 		}
+	}
+
+	if cfg != nil {
+		instance.bootTime = cfg.Svc.BootTime
+	} else {
+		instance.bootTime = time.Now()
 	}
 
 	return instance
@@ -58,6 +67,7 @@ func (s *Controller) preHandle(ctx gtype.Context, ps gtype.Params) {
 		ctx.SetHandled(true)
 		return
 	}
+	ctx.SetClientOrganization(ou)
 }
 
 func (s *Controller) createCatalog(doc gtype.Doc, names ...string) gtype.Catalog {

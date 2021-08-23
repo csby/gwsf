@@ -62,16 +62,26 @@ func (s *InputUdp) run() {
 		if err := recover(); err != nil {
 			s.LogError("fwd udp input listen error: ", err)
 		}
+		s.setIsRunning(false)
 	}()
 
+	s.lastError = ""
 	addr := fmt.Sprintf("%s:%d", s.Local.ListenAddress, s.Local.ListenPort)
 	c, err := net.ListenPacket("udp", addr)
 	if err != nil {
+		s.lastError = err.Error()
 		s.LogError("fwd udp input listen fail: ", err)
 		return
 	}
 	s.c = c
-	defer s.close()
+	defer func() {
+		s.close()
+		s.LogInfo(fmt.Sprintf("forward udp input(id=%s) is closed, router: '%s:%d' => '%s(%s)' => '%s:%d'",
+			s.Local.ID,
+			s.Local.ListenAddress, s.Local.ListenPort,
+			s.Local.TargetNodeName, s.Local.TargetNodeID,
+			s.Local.TargetAddress, s.Local.TargetPort))
+	}()
 
 	s.LogInfo(fmt.Sprintf("forward udp input(id=%s) is ready, router: '%s' => '%s(%s)' => '%s:%d'",
 		s.Local.ID,
@@ -79,6 +89,7 @@ func (s *InputUdp) run() {
 		s.Local.TargetNodeName, s.Local.TargetNodeID,
 		s.Local.TargetAddress, s.Local.TargetPort))
 
+	s.setIsRunning(true)
 	size := 65535 - 20 - 8
 	for {
 
@@ -102,10 +113,4 @@ func (s *InputUdp) close() {
 
 	s.c.Close()
 	s.c = nil
-
-	s.LogInfo(fmt.Sprintf("forward udp input(id=%s) is closed, router: '%s:%d' => '%s(%s)' => '%s:%d'",
-		s.Local.ID,
-		s.Local.ListenAddress, s.Local.ListenPort,
-		s.Local.TargetNodeName, s.Local.TargetNodeID,
-		s.Local.TargetAddress, s.Local.TargetPort))
 }

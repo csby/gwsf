@@ -30,6 +30,8 @@ type context struct {
 	enterTime   time.Time
 	leaveTime   time.Time
 	keys        map[string]interface{}
+
+	clientOrganizationalUnit string
 }
 
 func (s *context) Request() *http.Request {
@@ -268,6 +270,14 @@ func (s *context) Del(key string) bool {
 	} else {
 		return false
 	}
+}
+
+func (s *context) ClientOrganization() string {
+	return s.clientOrganizationalUnit
+}
+
+func (s *context) SetClientOrganization(ou string) {
+	s.clientOrganizationalUnit = ou
 }
 
 func (s *context) NewGuid() string {

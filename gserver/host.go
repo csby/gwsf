@@ -120,8 +120,10 @@ func (s *host) runHttp(handler *handler) error {
 	s.LogInfo("http server running on \"", addr, "\"")
 
 	s.httpServer = &http.Server{
-		Addr:    addr,
-		Handler: handler,
+		Addr: addr,
+		Handler: &protocol{
+			handler: handler,
+		},
 	}
 	if s.cfg.Http.BehindProxy {
 		s.httpServer.ProxyRemoteAddr = s.getRemoteAddr
@@ -148,12 +150,15 @@ func (s *host) runHttps(handler *handler) error {
 	if err != nil {
 		return fmt.Errorf("load pfx file fail: %v", err)
 	}
-	handler.serverCrt = pfx
 
+	serverHandler := &protocol{
+		handler:   handler,
+		serverCrt: pfx,
+	}
 	addr := fmt.Sprintf("%s:%d", s.cfg.Https.Address, s.cfg.Https.Port)
 	s.httpsServer = &http.Server{
 		Addr:    addr,
-		Handler: handler,
+		Handler: serverHandler,
 		TLSConfig: &tls.Config{
 			Certificates: pfx.TlsCertificates(),
 			ClientAuth:   tls.NoClientCert,
@@ -171,7 +176,7 @@ func (s *host) runHttps(handler *handler) error {
 		if err != nil {
 			return fmt.Errorf("load ca file fail: %v", err)
 		}
-		handler.caCrt = crt
+		serverHandler.caCrt = crt
 		s.httpsServer.TLSConfig.ClientCAs = crt.Pool()
 	}
 
@@ -198,12 +203,15 @@ func (s *host) runCloud(handler *handler) error {
 	if err != nil {
 		return fmt.Errorf("load pfx file fail: %v", err)
 	}
-	handler.serverCrt = pfx
 
+	serverHandler := &protocol{
+		handler:   handler,
+		serverCrt: pfx,
+	}
 	addr := fmt.Sprintf("%s:%d", s.cfg.Cloud.Address, s.cfg.Cloud.Port)
 	s.cloudServer = &http.Server{
 		Addr:    addr,
-		Handler: handler,
+		Handler: serverHandler,
 		TLSConfig: &tls.Config{
 			Certificates: pfx.TlsCertificates(),
 			ClientAuth:   tls.NoClientCert,
@@ -221,7 +229,7 @@ func (s *host) runCloud(handler *handler) error {
 		if err != nil {
 			return fmt.Errorf("load ca file fail: %v", err)
 		}
-		handler.caCrt = crt
+		serverHandler.caCrt = crt
 		s.cloudServer.TLSConfig.ClientCAs = crt.Pool()
 	}
 

@@ -35,6 +35,24 @@ func NewService(log gtype.Log, cfg *gcfg.Config, svcMgr gtype.SvcUpdMgr) *Servic
 	return instance
 }
 
+func (s *Service) Version(ctx gtype.Context, ps gtype.Params) {
+	data := ""
+	cfg := s.cfg
+	if cfg != nil {
+		data = cfg.Module.Version
+	}
+
+	ctx.Success(data)
+}
+
+func (s *Service) VersionDoc(doc gtype.Doc, method string, uri gtype.Uri) {
+	catalog := s.createCatalog(doc, "后台服务")
+	function := catalog.AddFunction(method, uri, "获取服务版本号")
+	function.SetNote("获取当前服务版本号信息")
+	function.SetOutputDataExample("1.0.1.0")
+	function.AddOutputError(gtype.ErrInternal)
+}
+
 func (s *Service) Info(ctx gtype.Context, ps gtype.Params) {
 	data := &gtype.SvcInfo{BootTime: gtype.DateTime(s.bootTime)}
 	cfg := s.cfg

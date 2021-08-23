@@ -10,6 +10,8 @@ import (
 
 type Handler interface {
 	Init()
+	Cloud() Cloud
+	Forward() Forward
 }
 
 func NewHandler(log gtype.Log, cfg *gcfg.Config, optChannels gtype.SocketChannelCollection) Handler {
@@ -54,4 +56,12 @@ func (s *innerHandler) Init() {
 	}
 
 	s.forward.Start()
+}
+
+func (s *innerHandler) Cloud() Cloud {
+	return s.cloud
+}
+
+func (s *innerHandler) Forward() Forward {
+	return s.forward
 }

@@ -5,23 +5,27 @@ import (
 	"github.com/csby/gwsf/gfwd"
 	"github.com/csby/gwsf/gtype"
 	"github.com/gorilla/websocket"
+	"sync"
 )
 
 type Forward interface {
+	SetState(state func(id string, isRunning bool, lastError string, newCount, oldCount int))
+	GetStates(states map[string]*gcfg.FwdState)
+	IsRunning() bool
 	Start()
 	Stop()
 }
 
 func NewForward(log gtype.Log, cfg *gcfg.Config, dialer *websocket.Dialer, chs *Channels) Forward {
-	instance := &innerForward{}
+	instance := &innerForward{
+		runningCount: 0,
+	}
 	instance.SetLog(log)
 	instance.cfg = cfg
 	instance.dialer = dialer
 	instance.chs = chs
 	instance.tcpInputs = make([]*gfwd.InputTcp, 0)
 	instance.udpInputs = make([]*gfwd.InputUdp, 0)
-
-	instance.buildForwards()
 
 	if chs != nil {
 		if chs.node != nil {
@@ -44,10 +48,27 @@ type innerForward struct {
 
 	udpForwards []gcfg.Fwd
 	udpInputs   []*gfwd.InputUdp
+
+	stateMutex   sync.RWMutex
+	runningCount int
+	state        func(id string, isRunning bool, lastError string, newCount, oldCount int)
+}
+
+func (s *innerForward) SetState(state func(id string, isRunning bool, lastError string, newCount, oldCount int)) {
+	s.state = state
+}
+
+func (s *innerForward) IsRunning() bool {
+	if s.runningCount > 0 {
+		return true
+	} else {
+		return false
+	}
 }
 
 func (s *innerForward) Start() {
 	s.Stop()
+	s.buildForwards()
 
 	// tcp
 	count := len(s.tcpForwards)
@@ -64,11 +85,13 @@ func (s *innerForward) Start() {
 		input.SetLog(s.GetLog())
 		input.Dialer = s.dialer
 		input.InstanceID = s.cfg.Node.InstanceId
+		input.StateChanged = s.onInputStateChanged
 
 		s.tcpInputs = append(s.tcpInputs, input)
 		input.Start()
 	}
 
+	// udp
 	count = len(s.udpForwards)
 	for index := 0; index < count; index++ {
 		fwd := s.udpForwards[index]
@@ -83,6 +106,7 @@ func (s *innerForward) Start() {
 		input.SetLog(s.GetLog())
 		input.Dialer = s.dialer
 		input.InstanceID = s.cfg.Node.InstanceId
+		input.StateChanged = s.onInputStateChanged
 
 		s.udpInputs = append(s.udpInputs, input)
 		input.Start()
@@ -108,6 +132,40 @@ func (s *innerForward) Stop() {
 		}
 
 		input.Stop()
+	}
+}
+
+func (s *innerForward) GetStates(states map[string]*gcfg.FwdState) {
+	if states == nil {
+		return
+	}
+
+	// TCP
+	c := len(s.tcpInputs)
+	for i := 0; i < c; i++ {
+		item := s.tcpInputs[i]
+		state, ok := states[item.Local.ID]
+		if !ok {
+			continue
+		}
+		state.IsRunning = item.IsRunning()
+		if !state.IsRunning {
+			state.LastError = item.LastError()
+		}
+	}
+
+	// UDP
+	c = len(s.udpInputs)
+	for i := 0; i < c; i++ {
+		item := s.udpInputs[i]
+		state, ok := states[item.Local.ID]
+		if !ok {
+			continue
+		}
+		state.IsRunning = item.IsRunning()
+		if !state.IsRunning {
+			state.LastError = item.LastError()
+		}
 	}
 }
 
@@ -225,5 +283,20 @@ func (s *innerForward) readNodeMessage(message *gtype.SocketMessage, channel gty
 		if err == nil {
 			go s.writeUdp(fwd)
 		}
+	}
+}
+
+func (s *innerForward) onInputStateChanged(id string, isRunning bool, lastError string) {
+	s.stateMutex.Lock()
+	defer s.stateMutex.Unlock()
+
+	oldCount := s.runningCount
+	if isRunning {
+		s.runningCount++
+	} else {
+		s.runningCount--
+	}
+	if s.state != nil {
+		s.state(id, isRunning, lastError, s.runningCount, oldCount)
 	}
 }

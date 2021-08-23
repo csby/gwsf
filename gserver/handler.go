@@ -85,14 +85,15 @@ type handler struct {
 	cfg     *gcfg.Config
 	handler gtype.Handler
 
-	router    *grouter.Router
-	rid       gtype.Rand
-	caCrt     *gcrt.Crt
-	serverCrt *gcrt.Pfx
+	router *grouter.Router
+	rid    gtype.Rand
 }
 
-func (s *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (s *handler) ServeHTTP(w http.ResponseWriter, r *http.Request, caCrt *gcrt.Crt, serverCrt *gcrt.Pfx) {
 	ctx := s.newContext(w, r)
+	ctx.certificate.Ca = caCrt
+	ctx.certificate.Server = serverCrt
+
 	s.LogDebug("new request: rid=", ctx.rid,
 		", rip=", ctx.rip,
 		", host=", r.Host,
@@ -155,9 +156,6 @@ func (s *handler) newContext(w http.ResponseWriter, r *http.Request) *context {
 	ctx.method = r.Method
 	if r.TLS != nil {
 		ctx.schema = "https"
-		ctx.certificate.Ca = s.caCrt
-		ctx.certificate.Server = s.serverCrt
-
 		if len(r.TLS.PeerCertificates) > 0 {
 			clientCrt := &gcrt.Crt{}
 			if clientCrt.FromConnectionState(r.TLS) == nil {

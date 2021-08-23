@@ -103,6 +103,8 @@ func (s *innerHandler) mapApi(router gtype.Router, path *gtype.Path) gtype.HttpH
 		s.monitor.GetNetworkListenPorts, s.monitor.GetNetworkListenPortsDoc)
 
 	// 后台服务
+	router.POST(path.Uri("/service/version").SetTokenUI(nil).SetTokenCreate(nil), nil,
+		s.service.Version, s.service.VersionDoc)
 	router.POST(path.Uri("/service/info"), tokenChecker,
 		s.service.Info, s.service.InfoDoc)
 	router.POST(path.Uri("/service/restart/enable"), tokenChecker,

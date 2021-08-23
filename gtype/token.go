@@ -35,6 +35,7 @@ type TokenDatabase interface {
 	Del(key string) bool
 	Lst(key string) []interface{}
 	Permanent(key string, val bool) bool
+	ExpiredDuration() time.Duration
 }
 
 type TokenAuth struct {
@@ -84,12 +85,15 @@ func TokenUIForAccountPassword() []TokenUI {
 
 type Token struct {
 	ID          string    `json:"id" note:"标识ID"`
+	UserID      string    `json:"userId" note:"用户ID"`
 	UserAccount string    `json:"userAccount" note:"用户账号"`
 	UserName    string    `json:"userName" note:"用户姓名"`
+	DisplayName string    `json:"displayName" note:"显示"`
 	LoginIP     string    `json:"loginIp" note:"用户登陆IP"`
 	LoginTime   time.Time `json:"loginTime" note:"登陆时间"`
 	ActiveTime  time.Time `json:"activeTime" note:"最近激活时间"`
 	Usage       int       `json:"usage" note:"使用次数"`
+	Kinds       []int8    `json:"kinds" note:"用户类型"`
 
 	Ext interface{} `json:"ext" note:"扩展信息"`
 }
@@ -98,6 +102,10 @@ type TokenFilter struct {
 	Account  string `json:"account"`
 	Password string `json:"password"`
 	FunId    string `json:"funId"`
+}
+
+type TokenCode struct {
+	Code string `json:"code" required:"true" note:"授权码"`
 }
 
 type OnlineUser struct {
@@ -155,6 +163,10 @@ type tokenDatabase struct {
 
 func (s *tokenDatabase) Name() string {
 	return s.name
+}
+
+func (s *tokenDatabase) ExpiredDuration() time.Duration {
+	return s.exp
 }
 
 func (s *tokenDatabase) Set(key string, data interface{}) {
