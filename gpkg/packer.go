@@ -118,7 +118,7 @@ func (s *packer) packApp(outRootPath string, app Application) error {
 			continue
 		}
 
-		err = folder.Copy(filepath.Join(web.Src.Root, "dist"), filepath.Join(siteRoot, web.Name))
+		err = folder.Copy(filepath.Join(web.Src.Root, "dist"), filepath.Join(siteRoot, web.Folder, web.Name))
 		if err != nil {
 			return err
 		}

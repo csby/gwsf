@@ -10,6 +10,7 @@ import (
 
 type Website struct {
 	Enable bool   `json:"enable"`
+	Folder string `json:"folder"`
 	Name   string `json:"name"`
 	Src    Source `json:"src"`
 }
