@@ -77,29 +77,34 @@ func (t DateTime) MarshalJSON() ([]byte, error) {
 }
 
 func (t *DateTime) UnmarshalBSON(data []byte) (err error) {
-	var d bson.D
-	err = bson.Unmarshal(data, &d)
-	if err != nil {
-		return err
-	}
-	if v, ok := d.Map()["t"]; ok {
-		return t.UnmarshalText([]byte(v.(string)))
-	}
-	return fmt.Errorf("key 't' missing")
+	var now time.Time
+	err = bson.Unmarshal(data, &now)
+
+	*t = DateTime(now)
+	return
 }
 
 func (t DateTime) MarshalBSON() ([]byte, error) {
-	txt, err := t.MarshalText()
-	if err != nil {
-		return nil, err
+	v := time.Time(t)
+	return bson.Marshal(&v)
+}
+
+func (t *DateTime) UnmarshalBSONValue(dataType bsontype.Type, data []byte) error {
+	rv := bson.RawValue{
+		Type:  dataType,
+		Value: data,
 	}
-	b, err := bson.Marshal(map[string]string{"t": string(txt)})
-	return b, err
+	now := time.Time{}
+	err := rv.Unmarshal(&now)
+	if err == nil {
+		*t = DateTime(now)
+	}
+	return err
 }
 
 func (t *DateTime) MarshalBSONValue() (bsontype.Type, []byte, error) {
-	b, err := bson.Marshal(t)
-	return bson.TypeEmbeddedDocument, b, err
+	v := time.Time(*t)
+	return bson.MarshalValue(&v)
 }
 
 func (t DateTime) String() string {
@@ -187,6 +192,33 @@ func (t DateTime) Equal(u DateTime) bool {
 
 type Date time.Time
 
+func (t *Date) UnmarshalText(data []byte) (err error) {
+	var now time.Time
+	dataLen := len(data)
+	if dataLen == len(dateFormat)+2 {
+		now, err = time.ParseInLocation(`"`+dateFormat+`"`, string(data), time.Local)
+	} else if dataLen == len(timeFormat)+2 {
+		now, err = time.ParseInLocation(`"`+timeFormat+`"`, string(data), time.Local)
+	} else if dataLen == len(zoneFormat)+2 {
+		now, err = time.ParseInLocation(`"`+zoneFormat+`"`, string(data), time.UTC)
+	} else if dataLen == len(xmlTimeFormat) {
+		now, err = time.ParseInLocation(``+xmlTimeFormat+``, string(data), time.Local)
+	} else if dataLen == len(xmlDateFormat) {
+		now, err = time.ParseInLocation(``+xmlDateFormat+``, string(data), time.Local)
+	} else {
+		now, err = time.Parse(time.RFC3339, string(data))
+	}
+
+	*t = Date(now)
+
+	return
+}
+
+func (t Date) MarshalText() ([]byte, error) {
+	text := time.Time(t).Format(xmlDateFormat)
+	return []byte(text), nil
+}
+
 func (t *Date) UnmarshalJSON(data []byte) (err error) {
 	var now time.Time
 	dataLen := len(data)
@@ -197,6 +229,10 @@ func (t *Date) UnmarshalJSON(data []byte) (err error) {
 		now, err = time.ParseInLocation(`"`+timeFormat+`"`, string(data), time.Local)
 	} else if dataLen == len(zoneFormat)+2 {
 		now, err = time.ParseInLocation(`"`+zoneFormat+`"`, string(data), time.UTC)
+	} else if dataLen == len(xmlTimeFormat) {
+		now, err = time.ParseInLocation(``+xmlTimeFormat+``, string(data), time.Local)
+	} else if dataLen == len(xmlDateFormat) {
+		now, err = time.ParseInLocation(``+xmlDateFormat+``, string(data), time.Local)
 	} else {
 		now, err = time.Parse(time.RFC3339, string(data))
 	}
@@ -211,6 +247,37 @@ func (t Date) MarshalJSON() ([]byte, error) {
 	b = time.Time(t).AppendFormat(b, dateFormat)
 	b = append(b, '"')
 	return b, nil
+}
+
+func (t *Date) UnmarshalBSON(data []byte) (err error) {
+	var now time.Time
+	err = bson.Unmarshal(data, &now)
+
+	*t = Date(now)
+	return
+}
+
+func (t Date) MarshalBSON() ([]byte, error) {
+	v := time.Time(t)
+	return bson.Marshal(&v)
+}
+
+func (t *Date) UnmarshalBSONValue(dataType bsontype.Type, data []byte) error {
+	rv := bson.RawValue{
+		Type:  dataType,
+		Value: data,
+	}
+	now := time.Time{}
+	err := rv.Unmarshal(&now)
+	if err == nil {
+		*t = Date(now)
+	}
+	return err
+}
+
+func (t *Date) MarshalBSONValue() (bsontype.Type, []byte, error) {
+	v := time.Time(*t)
+	return bson.MarshalValue(&v)
 }
 
 func (t Date) String() string {
