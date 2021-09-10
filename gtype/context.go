@@ -1,6 +1,9 @@
 package gtype
 
-import "net/http"
+import (
+	"net/http"
+	"time"
+)
 
 type Context interface {
 	Request() *http.Request
@@ -14,6 +17,8 @@ type Context interface {
 	Success(data interface{})
 	Error(err Error, detail ...interface{})
 
+	EnterTime() time.Time
+	LeaveTime() time.Time
 	Method() string
 	Schema() string
 	Host() string
@@ -26,6 +31,11 @@ type Context interface {
 	RID() uint64
 	RIP() string
 	NewGuid() string
+	GetInput() []byte
+	GetOutput() []byte
+	IsError() bool
+	SetLog(v bool)
+	GetLog() bool
 
 	Set(key string, val interface{})
 	Get(key string) (interface{}, bool)

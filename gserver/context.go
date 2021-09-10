@@ -27,6 +27,7 @@ type context struct {
 	log         bool
 	rid         uint64
 	rip         string
+	result      int
 	enterTime   time.Time
 	leaveTime   time.Time
 	keys        map[string]interface{}
