@@ -136,7 +136,7 @@ func (s *packer) packApp(outRootPath string, app Application) error {
 	}
 
 	// source
-	if s.c.Source {
+	if s.c.Source && app.Src.Enable {
 		sourceFileName := fmt.Sprintf("%s_src_%s.%s", app.Name, s.c.Version, s.pkgExt())
 		fmt.Println("正在打包服务源代码:", sourceFileName)
 
@@ -190,7 +190,7 @@ func (s *packer) outputWeb(outRootPath string, web Website, namePrefix string) e
 		return err
 	}
 
-	if s.c.Source {
+	if s.c.Source && web.Src.Enable {
 		binaryFileName = fmt.Sprintf("web.%s_%s_src_%s.%s", namePrefix, web.Name, version, s.pkgExt())
 		fmt.Println("正在打包网站源代码:", binaryFileName)
 		err = s.outputWebFolder(web.Src.Root, filepath.Join(outRootPath, binaryFileName), web.Src.IsIgnore)
