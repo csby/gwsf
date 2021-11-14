@@ -22,6 +22,8 @@ type Auth struct {
 	ldap         Ldap
 	captchaStore base64Captcha.Store
 	rsaPrivate   grsa.Private
+
+	AccountVerification func(account, password string) gtype.Error
 }
 
 func NewAuth(log gtype.Log, cfg *gcfg.Config, db gtype.TokenDatabase, chs gtype.SocketChannelCollection) *Auth {
@@ -252,32 +254,39 @@ func (s *Auth) Authenticate(ctx gtype.Context, account, password string) (*gtype
 	act := strings.ToLower(account)
 	pwd := password
 
-	var user *gcfg.SiteOptUser = nil
-	userCount := len(s.cfg.Site.Opt.Users)
-	for index := 0; index < userCount; index++ {
-		if act == strings.ToLower(s.cfg.Site.Opt.Users[index].Account) {
-			user = &s.cfg.Site.Opt.Users[index]
-			break
-		}
-	}
-
 	var err error = nil
-	userName := account
-	if user != nil {
-		if pwd != user.Password {
-			return nil, gtype.ErrLoginPasswordInvalid, nil
+	if s.AccountVerification != nil {
+		ge := s.AccountVerification(act, pwd)
+		if ge != nil {
+			return nil, ge, nil
 		}
 	} else {
-		if s.ldap.Enable {
-			err = s.ldap.Authenticate(account, password)
-			if err != nil {
-				return nil, gtype.ErrLoginAccountOrPasswordInvalid, err
+		var user *gcfg.SiteOptUser = nil
+		userCount := len(s.cfg.Site.Opt.Users)
+		for index := 0; index < userCount; index++ {
+			if act == strings.ToLower(s.cfg.Site.Opt.Users[index].Account) {
+				user = &s.cfg.Site.Opt.Users[index]
+				break
+			}
+		}
+
+		if user != nil {
+			if pwd != user.Password {
+				return nil, gtype.ErrLoginPasswordInvalid, nil
 			}
 		} else {
-			return nil, gtype.ErrLoginAccountNotExit, nil
+			if s.ldap.Enable {
+				err = s.ldap.Authenticate(account, password)
+				if err != nil {
+					return nil, gtype.ErrLoginAccountOrPasswordInvalid, err
+				}
+			} else {
+				return nil, gtype.ErrLoginAccountNotExit, nil
+			}
 		}
 	}
 
+	userName := account
 	now := time.Now()
 	token := &gtype.Token{
 		ID:          ctx.NewGuid(),

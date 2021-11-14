@@ -75,6 +75,10 @@ func (s *innerHandler) mapApi(router gtype.Router, path *gtype.Path) gtype.HttpH
 	s.update = controller.NewUpdate(s.GetLog(), s.cfg, s.svcMgr)
 	s.websocket = controller.NewWebsocket(s.GetLog(), s.cfg, s.dbToken, s.wsc)
 
+	if s.cfg != nil {
+		s.auth.AccountVerification = s.cfg.Site.Opt.AccountVerification
+	}
+
 	s.apiPath.DefaultTokenCreate = s.auth.CreateTokenForAccountPassword
 	tokenChecker := s.auth.CheckToken
 	// 获取验证码
