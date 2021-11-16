@@ -126,6 +126,9 @@ func (s *argument) parseExample(v reflect.Value, a *argument) {
 					if child.Name == "" {
 						child.Name = typeField.Name
 					}
+					if child.Name == "-" {
+						continue
+					}
 					cns := strings.Split(child.Name, ",")
 					if len(cns) > 1 {
 						child.Name = cns[0]
