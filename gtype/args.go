@@ -7,6 +7,12 @@ import (
 	"strings"
 )
 
+const (
+	ArgsFmtText = 0
+	ArgsFmtJson = 1
+	ArgsFmtXml  = 2
+)
+
 type ArgsParser interface {
 	Parse(key, value string)
 }

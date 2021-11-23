@@ -3,6 +3,8 @@ package gtype
 const (
 	ContentTypeJson     = "application/json"
 	ContentTypeFormData = "multipart/form-data"
+	ContentTypeXml      = "application/xml"
+	ContentTypeSoap     = "application/soap+xml"
 )
 const (
 	FormValueKindText = 0
@@ -18,12 +20,16 @@ type Function interface {
 	RemoveInputQuery(name string)
 	AddInputForm(required bool, key, note string, valueKind int, defaultValue interface{})
 	RemoveInputForm(key string)
+	SetInputFormat(v int)
 	SetInputExample(v interface{})
 	SetInputJsonExample(v interface{})
+	SetInputXmlExample(v interface{})
 	AddOutputHeader(name, value string)
 	ClearOutputHeader()
+	SetOutputFormat(v int)
 	SetOutputExample(v interface{})
 	SetOutputDataExample(v interface{})
+	SetOutputXmlExample(v interface{})
 	AddOutputError(err Error)
 	AddOutputErrorCustom(code int, summary string)
 }

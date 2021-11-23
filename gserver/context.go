@@ -7,6 +7,7 @@ import (
 	"github.com/csby/gwsf/gtype"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -19,18 +20,20 @@ type context struct {
 	token    string
 	handled  bool
 
-	certificate gtype.Certificate
-	queries     gtype.QueryCollection
-	input       []byte
-	output      []byte
-	outputCode  *int
-	log         bool
-	rid         uint64
-	rip         string
-	result      int
-	enterTime   time.Time
-	leaveTime   time.Time
-	keys        map[string]interface{}
+	certificate  gtype.Certificate
+	queries      gtype.QueryCollection
+	input        []byte
+	inputFormat  int
+	output       []byte
+	outputFormat int
+	outputCode   *int
+	log          bool
+	rid          uint64
+	rip          string
+	result       int
+	enterTime    time.Time
+	leaveTime    time.Time
+	keys         map[string]interface{}
 
 	clientOrganizationalUnit string
 }
@@ -60,6 +63,7 @@ func (s *context) GetJson(v interface{}) error {
 	if err == nil {
 		s.input, err = json.Marshal(v)
 	}
+	s.inputFormat = gtype.ArgsFmtJson
 
 	return err
 }
@@ -71,13 +75,53 @@ func (s *context) GetXml(v interface{}) error {
 	}
 	defer s.request.Body.Close()
 	s.input = bodyData
+	s.inputFormat = gtype.ArgsFmtXml
 
 	err = xml.Unmarshal(bodyData, v)
 
 	return err
 }
 
+func (s *context) GetSoapAction() string {
+	if s.request == nil {
+		return ""
+	}
+
+	if len(s.request.Header) < 1 {
+		return ""
+	}
+	for k, v := range s.request.Header {
+		if strings.ToLower(k) != "content-type" {
+			continue
+		}
+		for i := 0; i < len(v); i++ {
+			content := v[i]
+			if len(content) < 1 {
+				continue
+			}
+			items := strings.Split(content, ";")
+			for j := 0; j < len(items); j++ {
+				item := items[j]
+				if len(item) < 1 {
+					continue
+				}
+				subs := strings.Split(item, "=")
+				if len(subs) == 2 {
+					if strings.ToLower(subs[0]) == "action" {
+						return strings.ReplaceAll(subs[1], "\"", "")
+					}
+				}
+			}
+		}
+
+		break
+	}
+
+	return ""
+}
+
 func (s *context) OutputJson(v interface{}) {
+	s.outputFormat = gtype.ArgsFmtJson
 	data, err := json.Marshal(v)
 	if err != nil {
 		fmt.Fprint(s.response, err)
@@ -91,6 +135,7 @@ func (s *context) OutputJson(v interface{}) {
 }
 
 func (s *context) OutputXml(v interface{}) {
+	s.outputFormat = gtype.ArgsFmtXml
 	if s.response == nil {
 		return
 	}
@@ -115,6 +160,37 @@ func (s *context) OutputXml(v interface{}) {
 
 	s.response.Header().Add("Access-Control-Allow-Origin", "*")
 	s.response.Header().Set("Content-Type", "application/xml;charset=utf-8")
+	if len(s.output) > 0 {
+		s.response.Write(s.output)
+	}
+}
+
+func (s *context) OutputSoap(v interface{}) {
+	s.outputFormat = gtype.ArgsFmtXml
+	if s.response == nil {
+		return
+	}
+
+	if v != nil {
+		switch v.(type) {
+		case []byte:
+			s.output = v.([]byte)
+		case string:
+			s.output = []byte(v.(string))
+		default:
+			bodyData, err := xml.MarshalIndent(v, "", "	")
+			if err != nil {
+				fmt.Fprint(s.response, err)
+				s.output = []byte(err.Error())
+				return
+			} else {
+				s.output = bodyData
+			}
+		}
+	}
+
+	s.response.Header().Add("Access-Control-Allow-Origin", "*")
+	s.response.Header().Set("Content-Type", "application/soap+xml; charset=utf-8")
 	if len(s.output) > 0 {
 		s.response.Write(s.output)
 	}
@@ -218,12 +294,24 @@ func (s *context) SetInput(v []byte) {
 	s.input = v
 }
 
+func (s *context) SetInputFormat(v int) {
+	s.inputFormat = v
+}
+
 func (s *context) GetInput() []byte {
 	return s.input
 }
 
+func (s *context) GetInputFormat() int {
+	return s.inputFormat
+}
+
 func (s *context) GetOutput() []byte {
 	return s.output
+}
+
+func (s *context) GetOutputFormat() int {
+	return s.outputFormat
 }
 
 func (s *context) EnterTime() time.Time {

@@ -1,6 +1,7 @@
 package gdoc
 
 import (
+	"encoding/xml"
 	"github.com/csby/gwsf/gtype"
 	"strings"
 )
@@ -107,9 +108,8 @@ func (s *Function) RemoveInputForm(key string) {
 	s.Input.RemoveForm(key)
 }
 
-func (s *Function) SetInputJsonExample(v interface{}) {
-	s.SetInputExample(v)
-	s.AddInputHeader(true, "content-type", "内容类型", gtype.ContentTypeJson, gtype.ContentTypeJson)
+func (s *Function) SetInputFormat(v int) {
+	s.Input.Format = v
 }
 
 func (s *Function) SetInputExample(v interface{}) {
@@ -120,6 +120,21 @@ func (s *Function) SetInputExample(v interface{}) {
 	} else {
 		s.Input.Model = make([]*Type, 0)
 	}
+}
+
+func (s *Function) SetInputJsonExample(v interface{}) {
+	s.SetInputFormat(gtype.ArgsFmtJson)
+	s.SetInputExample(v)
+	s.AddInputHeader(true, "content-type", "内容类型", gtype.ContentTypeJson, gtype.ContentTypeJson)
+}
+
+func (s *Function) SetInputXmlExample(v interface{}) {
+	s.SetInputFormat(gtype.ArgsFmtXml)
+	example, err := xml.MarshalIndent(v, "", "	")
+	if err == nil {
+		s.Input.Example = string(example)
+	}
+	s.AddInputHeader(true, "content-type", "内容类型", gtype.ContentTypeXml, gtype.ContentTypeXml)
 }
 
 func (s *Function) AddOutputHeader(name, value string) {
@@ -149,6 +164,10 @@ func (s *Function) AddOutputErrorCustom(code int, summary string) {
 	s.Output.AddErrorCustom(code, summary)
 }
 
+func (s *Function) SetOutputFormat(v int) {
+	s.Output.Format = v
+}
+
 func (s *Function) SetOutputExample(v interface{}) {
 	s.Output.Example = v
 	argument := modelArgument.FromExample(v)
@@ -171,7 +190,17 @@ func (s *Function) SetOutputDataExample(v interface{}) {
 	} else {
 		s.Output.Model = make([]*Type, 0)
 	}
+	s.SetOutputFormat(gtype.ArgsFmtJson)
 	s.AddOutputError(gtype.ErrException)
+	s.AddOutputHeader("content-type", "application/json;charset=utf-8")
+}
+
+func (s *Function) SetOutputXmlExample(v interface{}) {
+	s.SetOutputFormat(gtype.ArgsFmtXml)
+	example, err := xml.MarshalIndent(v, "", "	")
+	if err == nil {
+		s.Output.Example = string(example)
+	}
 	s.AddOutputHeader("content-type", "application/json;charset=utf-8")
 }
 

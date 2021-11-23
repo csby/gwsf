@@ -8,6 +8,7 @@ type Input struct {
 	Forms   []*Form     `json:"forms"`   // 表单
 	Model   []*Type     `json:"model"`   // 数据模型
 	Example interface{} `json:"example"` // 数据示例
+	Format  int         `json:"format"`  // 数据格式: 0-text; 1-json; 2-xml
 }
 
 func (s *Input) GetHeader(name string) *Header {

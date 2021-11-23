@@ -12,8 +12,10 @@ type Context interface {
 	GetBody() ([]byte, error)
 	GetJson(v interface{}) error
 	GetXml(v interface{}) error
+	GetSoapAction() string
 	OutputJson(v interface{})
 	OutputXml(v interface{})
+	OutputSoap(v interface{})
 	Success(data interface{})
 	Error(err Error, detail ...interface{})
 
@@ -32,7 +34,9 @@ type Context interface {
 	RIP() string
 	NewGuid() string
 	GetInput() []byte
+	GetInputFormat() int
 	GetOutput() []byte
+	GetOutputFormat() int
 	IsError() bool
 	SetLog(v bool)
 	GetLog() bool

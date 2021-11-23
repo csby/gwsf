@@ -10,6 +10,7 @@ type Output struct {
 	Headers []*Header       `json:"headers"` // 头部
 	Model   []*Type         `json:"model"`   // 数据模型
 	Example interface{}     `json:"example"` // 数据示例
+	Format  int             `json:"format"`  // 数据格式: 0-text; 1-json; 2-xml
 	Errors  ErrorCollection `json:"errors"`  // 输出错误代码
 }
 
