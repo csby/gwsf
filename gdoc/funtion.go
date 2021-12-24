@@ -201,7 +201,7 @@ func (s *Function) SetOutputXmlExample(v interface{}) {
 	if err == nil {
 		s.Output.Example = string(example)
 	}
-	s.AddOutputHeader("content-type", "application/json;charset=utf-8")
+	s.AddOutputHeader("content-type", "application/xml;charset=utf-8")
 }
 
 func (s *Function) GetInputHeader(name string) *Header {
