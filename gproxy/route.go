@@ -1,6 +1,8 @@
 package gproxy
 
-// 转发路由
+import "strings"
+
+// Route 转发路由
 type Route struct {
 	// ture: the incoming TLS SNI server name is sni;
 	// false: the incoming HTTP/1.x Host header name is httpHost
@@ -14,8 +16,26 @@ type Route struct {
 
 	// 目标地址，如"172.16.100.85:8080"
 	Target string
+	// 备用目标地址
+	SpareTargets []string
 
 	// 版本号: 0-不添加头部；
 	//1-添加代理头部（PROXY family srcIP srcPort targetIP targetPort）
 	Version int
+}
+
+func (s *Route) Targets() string {
+	sb := &strings.Builder{}
+
+	sb.WriteString(s.Target)
+	c := len(s.SpareTargets)
+	for i := 0; i < c; i++ {
+		v := s.SpareTargets[i]
+		if len(v) > 0 {
+			sb.WriteString(" / ")
+			sb.WriteString(v)
+		}
+	}
+
+	return sb.String()
 }
