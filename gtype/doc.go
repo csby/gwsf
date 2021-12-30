@@ -1,6 +1,8 @@
 package gtype
 
 const (
+	ContentTypeHtml     = "text/html"
+	ContentTypeText     = "text/plain"
 	ContentTypeJson     = "application/json"
 	ContentTypeFormData = "multipart/form-data"
 	ContentTypeXml      = "application/xml"

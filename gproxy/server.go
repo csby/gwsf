@@ -157,6 +157,7 @@ func (s *Server) onConnected(id, addr, domain, source, target string) {
 			Domain:     domain,
 			SourceAddr: source,
 			TargetAddr: target,
+			Status:     0,
 		})
 	}
 }
@@ -170,6 +171,7 @@ func (s *Server) onDisconnected(id, addr, domain, source, target string) {
 			Domain:     domain,
 			SourceAddr: source,
 			TargetAddr: target,
+			Status:     1,
 		})
 	}
 }

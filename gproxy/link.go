@@ -14,6 +14,7 @@ type Link struct {
 	Domain     string         `json:"domain" note:"域名"`
 	SourceAddr string         `json:"sourceAddr" note:"传入地址"`
 	TargetAddr string         `json:"targetAddr" note:"目标地址"`
+	Status     int            `json:"status" note:"状态: 0-已连接; 1-已断开"`
 }
 
 type LinkFilter struct {
