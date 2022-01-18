@@ -94,6 +94,7 @@ type Token struct {
 	ActiveTime  time.Time `json:"activeTime" note:"最近激活时间"`
 	Usage       int       `json:"usage" note:"使用次数"`
 	Kinds       []int8    `json:"kinds" note:"用户类型"`
+	Version     string    `json:"version" note:"版本号"`
 
 	Ext interface{} `json:"ext" note:"扩展信息"`
 }

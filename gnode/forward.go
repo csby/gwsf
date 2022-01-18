@@ -5,6 +5,7 @@ import (
 	"github.com/csby/gwsf/gfwd"
 	"github.com/csby/gwsf/gtype"
 	"github.com/gorilla/websocket"
+	"strings"
 	"sync"
 )
 
@@ -184,38 +185,26 @@ func (s *innerForward) buildForwards() {
 		return
 	}
 
-	// tcp
-	count := len(s.cfg.Node.Forward.Tcp)
+	items := s.cfg.Node.Forward.Items
+	count := len(items)
 	for index := 0; index < count; index++ {
-		tcp := s.cfg.Node.Forward.Tcp[index]
-		if tcp == nil {
+		item := items[index]
+		if item == nil {
 			continue
 		}
-		if !tcp.Enable {
+		if !item.Enable {
 			continue
 		}
 
 		fwd := gcfg.Fwd{}
-		tcp.CopyTo(&fwd)
+		item.CopyTo(&fwd)
 
-		s.tcpForwards = append(s.tcpForwards, fwd)
-	}
-
-	// udp
-	count = len(s.cfg.Node.Forward.Udp)
-	for index := 0; index < count; index++ {
-		tcp := s.cfg.Node.Forward.Udp[index]
-		if tcp == nil {
-			continue
+		protocol := strings.ToLower(item.Protocol)
+		if protocol == "tcp" {
+			s.tcpForwards = append(s.tcpForwards, fwd)
+		} else if protocol == "udp" {
+			s.udpForwards = append(s.udpForwards, fwd)
 		}
-		if !tcp.Enable {
-			continue
-		}
-
-		fwd := gcfg.Fwd{}
-		tcp.CopyTo(&fwd)
-
-		s.udpForwards = append(s.udpForwards, fwd)
 	}
 }
 

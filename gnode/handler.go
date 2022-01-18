@@ -9,7 +9,7 @@ import (
 )
 
 type Handler interface {
-	Init()
+	Init(router gtype.Router, path *gtype.Path, preHandle gtype.HttpHandle)
 	Cloud() Cloud
 	Forward() Forward
 }
@@ -34,6 +34,21 @@ func NewHandler(log gtype.Log, cfg *gcfg.Config, optChannels gtype.SocketChannel
 
 	instance.cloud = NewCloud(log, cfg, instance.dialer, instance.chs)
 	instance.forward = NewForward(log, cfg, instance.dialer, instance.chs)
+	instance.controller = &innerController{
+		cfg:  cfg,
+		wcs:  optChannels,
+		node: instance,
+	}
+	if cfg != nil {
+		instance.controller.nodeInstance = cfg.Node.InstanceId
+	}
+	if crt.node != nil {
+		instance.controller.nodeId = crt.node.OrganizationalUnit()
+		instance.controller.nodeName = crt.node.CommonName()
+	}
+	instance.forward.SetState(instance.controller.onNodeFwdInputListenStateChanged)
+	instance.cloud.SetState(instance.controller.onNodeOnlineStateChanged)
+	instance.SetLog(log)
 
 	return instance
 }
@@ -45,17 +60,22 @@ type innerHandler struct {
 	chs    *Channels
 	dialer *websocket.Dialer
 
-	cloud   Cloud
-	forward Forward
+	cloud      Cloud
+	forward    Forward
+	controller *innerController
 }
 
-func (s *innerHandler) Init() {
+func (s *innerHandler) Init(router gtype.Router, path *gtype.Path, preHandle gtype.HttpHandle) {
 	err := s.cloud.Connect()
 	if err != nil {
 		s.LogError("connect to cloud fail: ", err)
 	}
 
 	s.forward.Start()
+
+	if router != nil && path != nil {
+		s.controller.initRouter(router, path, preHandle)
+	}
 }
 
 func (s *innerHandler) Cloud() Cloud {

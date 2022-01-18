@@ -10,8 +10,8 @@ func (s *Controller) GetOnlineNodes(ctx gtype.Context, ps gtype.Params) {
 }
 
 func (s *Controller) GetOnlineNodesDoc(doc gtype.Doc, method string, uri gtype.Uri) {
-	catalog := s.createCatalog(doc, "结点服务")
-	function := catalog.AddFunction(method, uri, "获取在线结点")
+	catalog := s.createCatalog(doc, "节点服务")
+	function := catalog.AddFunction(method, uri, "获取在线节点")
 	function.SetNote("获取当前所有在线列表")
 	function.SetRemark("该接口需要客户端证书")
 	function.SetOutputDataExample([]*gtype.Node{
@@ -21,7 +21,7 @@ func (s *Controller) GetOnlineNodesDoc(doc gtype.Doc, method string, uri gtype.U
 				Certificate: gtype.NewGuid(),
 			},
 			Kind:      "client",
-			Name:      "测试结点",
+			Name:      "测试节点",
 			IP:        "192.168.1.100",
 			LoginTime: gtype.DateTime(time.Now()),
 		},

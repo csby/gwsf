@@ -23,7 +23,7 @@ func (s *Controller) GetNodeServiceInfo(ctx gtype.Context, ps gtype.Params) {
 }
 
 func (s *Controller) GetNodeServiceInfoDoc(doc gtype.Doc, method string, uri gtype.Uri) {
-	catalog := s.createCatalog(doc, "结点服务")
+	catalog := s.createCatalog(doc, "节点服务")
 	function := catalog.AddFunction(method, uri, "获取服务信息")
 	function.SetNote("获取当前节点云服务信息")
 	function.SetRemark("该接口需要客户端证书")

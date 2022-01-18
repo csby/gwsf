@@ -15,6 +15,7 @@ func (s *Controller) NodeConnect(ctx gtype.Context, ps gtype.Params) {
 		ctx.Error(gtype.ErrNotSupport, fmt.Errorf("instance id of note is empty"))
 		return
 	}
+	version := ctx.Query("version")
 
 	websocketConn, err := s.wsGrader.Upgrade(ctx.Response(), ctx.Request(), nil)
 	if err != nil {
@@ -28,6 +29,7 @@ func (s *Controller) NodeConnect(ctx gtype.Context, ps gtype.Params) {
 	crt := ctx.Certificate().Client
 	token := &gtype.Token{
 		ID:          instanceId,
+		Version:     version,
 		UserAccount: crt.Organization(),
 		UserName:    crt.CommonName(),
 		LoginIP:     ctx.RIP(),
@@ -43,8 +45,17 @@ func (s *Controller) NodeConnect(ctx gtype.Context, ps gtype.Params) {
 
 	node := &gtype.Node{}
 	node.CopyFrom(token)
-	s.writeOptSocketMessage(gtype.WSNodeOnline, node)
-	defer s.writeOptSocketMessage(gtype.WSNodeOffline, node)
+	node.Province = crt.Province()
+	node.Locality = crt.Locality()
+	node.Address = crt.StreetAddress()
+	notAfter := crt.NotAfter()
+	if notAfter != nil {
+		v := gtype.DateTime(*notAfter)
+		node.CrtNotAfter = &v
+	}
+
+	s.clients.NodeOnline(node)
+	defer s.clients.NodeOffline(node)
 
 	waitGroup := &sync.WaitGroup{}
 	stopWrite := make(chan bool, 2)
@@ -114,11 +125,12 @@ func (s *Controller) NodeConnect(ctx gtype.Context, ps gtype.Params) {
 }
 
 func (s *Controller) NodeConnectDoc(doc gtype.Doc, method string, uri gtype.Uri) {
-	catalog := s.createCatalog(doc, "结点服务")
-	function := catalog.AddFunction(method, uri, "结点登录")
-	function.SetNote("接收或发送结点的交互信息，该接口保持阻塞至连接关闭")
+	catalog := s.createCatalog(doc, "节点服务")
+	function := catalog.AddFunction(method, uri, "节点登录")
+	function.SetNote("接收或发送节点的交互信息，该接口保持阻塞至连接关闭")
 	function.SetRemark("该接口需要客户端证书")
-	function.AddInputQuery(true, "instance", "结点实例ID", "")
+	function.AddInputQuery(true, "instance", "节点实例ID", "")
+	function.AddInputQuery(false, "version", "节点版本号", "")
 	function.SetInputExample(&gtype.SocketMessage{ID: 1})
 	function.SetOutputExample(&gtype.SocketMessage{ID: 2})
 	function.AddOutputError(gtype.ErrInternal)

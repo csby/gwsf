@@ -14,12 +14,22 @@ const (
 	WSRootSiteUploadFile = 111 // 根站点-上传文件
 	WSRootSiteDeleteFile = 112 // 根站点-删除文件
 
-	WSNodeOnline             = 121 // 结点上线
-	WSNodeOffline            = 122 // 结点下线
-	WSNodeForwardTcpStart    = 123 // 结点转发TCP开始
-	WSNodeForwardTcpEnd      = 124 // 结点转发TCP结束
-	WSNodeForwardUdpRequest  = 125 // 结点转发UDP请求
-	WSNodeForwardUdpResponse = 126 // 结点转发UDP响应
+	WSNodeOnline             = 121 // 节点上线
+	WSNodeOffline            = 122 // 节点下线
+	WSNodeForwardTcpStart    = 123 // 节点转发TCP开始
+	WSNodeForwardTcpEnd      = 124 // 节点转发TCP结束
+	WSNodeForwardUdpRequest  = 125 // 节点转发UDP请求
+	WSNodeForwardUdpResponse = 126 // 节点转发UDP响应
+
+	WSNodeRegister        = 131 // 节点注册
+	WSNodeRevoke          = 132 // 节点注销
+	WSNodeModify          = 133 // 节点修改
+	WSNodeInstanceOnline  = 135 // 节点实例上线
+	WSNodeInstanceOffline = 136 // 节点实例下线
+
+	WSNodeOnlineStateChanged      = 140 // 节点在线状态改变
+	WSNodeFwdInputListenSvcState  = 141 // 节点转发服务状态
+	WSNodeFwdInputListenItemState = 142 // 节点转发项目状态
 )
 
 type SocketMessage struct {

@@ -25,3 +25,8 @@ type ServerInfo struct {
 	Name    string `json:"name"`
 	Version string `json:"version"`
 }
+
+type ServerRole struct {
+	Cloud bool `json:"cloud" note:"是否云端"`
+	Node  bool `json:"node" note:"是否节点"`
+}

@@ -81,9 +81,9 @@ func (s *InputTcp) run() {
 
 	s.setIsRunning(true)
 	for {
-		c, err := l.Accept()
-		if err != nil {
-			s.LogError("fwd tcp input accept fail: ", err)
+		c, e := l.Accept()
+		if e != nil {
+			s.LogError("fwd tcp input accept fail: ", e)
 			return
 		}
 

@@ -72,7 +72,7 @@ func (s *innerCloud) Connect() error {
 		Scheme:   "wss",
 		Host:     fmt.Sprintf("%s:%d", s.cfg.Node.CloudServer.Address, s.cfg.Node.CloudServer.Port),
 		Path:     "/cloud.api/node/connect",
-		RawQuery: fmt.Sprintf("instance=%s", s.cfg.Node.InstanceId),
+		RawQuery: fmt.Sprintf("instance=%s&version=%s", s.cfg.Node.InstanceId, s.cfg.Module.Version),
 	}
 
 	go s.doConnect(u.String(), u.Host)

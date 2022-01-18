@@ -9,7 +9,7 @@ type ForwardId struct {
 type ForwardRequest struct {
 	ForwardId
 
-	NodeInstanceID string `json:"nodeInstId" note:"结点实例ID"`
+	NodeInstanceID string `json:"nodeInstId" note:"节点实例ID"`
 	TargetAddress  string `json:"targetAddr" note:"目标地址"`
 	TargetPort     string `json:"targetPort" note:"目标端口"`
 }
@@ -29,8 +29,8 @@ type ForwardInfo struct {
 	ForwardId
 
 	Time       DateTime `json:"time" note:"开始时间"`
-	SourceNode *Node    `json:"sourceNode" note:"发起结点"`
-	TargetNode *Node    `json:"targetNode" note:"目标结点"`
+	SourceNode *Node    `json:"sourceNode" note:"发起节点"`
+	TargetNode *Node    `json:"targetNode" note:"目标节点"`
 	TargetHost string   `json:"targetHost" note:"目标主机"`
 }
 
@@ -53,10 +53,10 @@ func (s ForwardInfoArray) Swap(i, j int) {
 }
 
 type ForwardInfoFilter struct {
-	SourceName string `json:"sourceName" note:"发起结点名称"`
-	SourceIP   string `json:"sourceIp" note:"发起结点IP地址"`
-	TargetName string `json:"targetName" note:"目标结点名称"`
-	TargetIP   string `json:"targetIp" note:"目标结点IP地址"`
+	SourceName string `json:"sourceName" note:"发起节点名称"`
+	SourceIP   string `json:"sourceIp" note:"发起节点IP地址"`
+	TargetName string `json:"targetName" note:"目标节点名称"`
+	TargetIP   string `json:"targetIp" note:"目标节点IP地址"`
 	TargetHost string `json:"targetHost" note:"目标主机"`
 }
 
@@ -113,7 +113,7 @@ func (s *ForwardInfoFilter) match(link *ForwardInfo) bool {
 type ForwardUdpResponse struct {
 	ForwardId
 
-	SourceNodeInstanceID string `json:"sourceId" note:"发起结点实例ID"`
+	SourceNodeInstanceID string `json:"sourceId" note:"发起节点实例ID"`
 	SourceAddress        string `json:"sourceAddr" note:"发起地址"`
 
 	Data []byte `json:"data" note:"数据"`
@@ -122,7 +122,17 @@ type ForwardUdpResponse struct {
 type ForwardUdpRequest struct {
 	ForwardUdpResponse
 
-	TargetNodeCertificateID string `json:"targetCertId" note:"目标结点证书ID"`
-	TargetNodeInstanceID    string `json:"targetInstId" note:"目标结点实例ID"`
+	TargetNodeCertificateID string `json:"targetCertId" note:"目标节点证书ID"`
+	TargetNodeInstanceID    string `json:"targetInstId" note:"目标节点实例ID"`
 	TargetAddress           string `json:"targetAddr" note:"目标地址"`
+}
+
+type ForwardState struct {
+	IsRunning bool   `json:"running" note:"状态: true-运行中; false-已停止"`
+	LastError string `json:"error" note:"错误信息"`
+}
+
+type ForwardItemState struct {
+	ForwardId
+	ForwardState
 }

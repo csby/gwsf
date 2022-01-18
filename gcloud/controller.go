@@ -18,6 +18,7 @@ type Controller struct {
 
 	wsGrader    websocket.Upgrader
 	fwdChannels *ForwardChannelCollection
+	clients     *NodeCollection
 
 	bootTime time.Time
 }
@@ -31,11 +32,16 @@ func NewController(log gtype.Log, cfg *gcfg.Config, chs *Channels) *Controller {
 	instance.fwdChannels = &ForwardChannelCollection{
 		channels: make(map[string]*ForwardChannel),
 	}
+	instance.clients = &NodeCollection{
+		cfg: cfg,
+	}
+	instance.clients.InitFromCfg(cfg)
 
 	if chs != nil {
 		if chs.node != nil {
 			chs.node.AddReader(instance.readNodeMessage)
 		}
+		instance.clients.opt = chs.Opt()
 	}
 
 	if cfg != nil {

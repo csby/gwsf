@@ -8,7 +8,7 @@ import (
 )
 
 type Handler interface {
-	Init(router gtype.Router, api func(path *gtype.Path, preHandle gtype.HttpHandle, wsc gtype.SocketChannelCollection))
+	Init(router gtype.Router, setup func(opt gtype.Option), api func(path *gtype.Path, preHandle gtype.HttpHandle, wsc gtype.SocketChannelCollection))
 }
 
 func NewHandler(log gtype.Log, cfg *gcfg.Config, webPrefix, apiPrefix, docWebPrefix string) Handler {
@@ -38,11 +38,16 @@ type innerHandler struct {
 	dbToken gtype.TokenDatabase
 	svcMgr  gtype.SvcUpdMgr
 
+	preHandle gtype.HttpHandle
+	isCloud   bool
+	isNode    bool
+
 	webPath      *gtype.Path
 	apiPath      *gtype.Path
 	docWebPrefix string
 
 	auth      *controller.Auth
+	role      *controller.Role
 	user      *controller.User
 	site      *controller.Site
 	monitor   *controller.Monitor
@@ -51,7 +56,12 @@ type innerHandler struct {
 	websocket *controller.Websocket
 }
 
-func (s *innerHandler) Init(router gtype.Router, api func(path *gtype.Path, preHandle gtype.HttpHandle, wsc gtype.SocketChannelCollection)) {
+func (s *innerHandler) Init(router gtype.Router,
+	setup func(opt gtype.Option),
+	api func(path *gtype.Path, preHandle gtype.HttpHandle, wsc gtype.SocketChannelCollection)) {
+	if setup != nil {
+		setup(s)
+	}
 
 	tokenChecker := s.mapApi(router, s.apiPath)
 
@@ -66,10 +76,23 @@ func (s *innerHandler) Init(router gtype.Router, api func(path *gtype.Path, preH
 	}
 }
 
+func (s *innerHandler) SetTokenChecker(v gtype.HttpHandle) {
+	s.preHandle = v
+}
+
+func (s *innerHandler) SetCloud(v bool) {
+	s.isCloud = v
+}
+
+func (s *innerHandler) SetNode(v bool) {
+	s.isNode = v
+}
+
 func (s *innerHandler) mapApi(router gtype.Router, path *gtype.Path) gtype.HttpHandle {
 	s.auth = controller.NewAuth(s.GetLog(), s.cfg, s.dbToken, s.wsc)
 	s.user = controller.NewUser(s.GetLog(), s.cfg, s.dbToken, s.wsc)
 	s.site = controller.NewSite(s.GetLog(), s.cfg, s.dbToken, s.wsc, s.docWebPrefix, s.webPath.Prefix)
+	s.role = controller.NewRole(s.GetLog(), s.cfg, s.isCloud, s.isNode)
 	s.monitor = controller.NewMonitor(s.GetLog(), s.cfg)
 	s.service = controller.NewService(s.GetLog(), s.cfg, s.svcMgr)
 	s.update = controller.NewUpdate(s.GetLog(), s.cfg, s.svcMgr)
@@ -81,6 +104,9 @@ func (s *innerHandler) mapApi(router gtype.Router, path *gtype.Path) gtype.HttpH
 
 	s.apiPath.DefaultTokenCreate = s.auth.CreateTokenForAccountPassword
 	tokenChecker := s.auth.CheckToken
+	if s.preHandle != nil {
+		tokenChecker = s.preHandle
+	}
 	// 获取验证码
 	router.POST(path.Uri("/captcha").SetTokenUI(nil).SetTokenCreate(nil), nil,
 		s.auth.GetCaptcha, s.auth.GetCaptchaDoc)
@@ -97,6 +123,10 @@ func (s *innerHandler) mapApi(router gtype.Router, path *gtype.Path) gtype.HttpH
 	// 获取在线用户
 	router.POST(path.Uri("/online/users"), tokenChecker,
 		s.user.GetOnlineUsers, s.user.GetOnlineUsersDoc)
+
+	// 系统角色
+	router.POST(path.Uri("/sys/role/server"), tokenChecker,
+		s.role.GetServerRole, s.role.GetServerRoleDoc)
 
 	// 系统信息
 	router.POST(path.Uri("/monitor/host"), tokenChecker,

@@ -8,14 +8,13 @@ import (
 type NodeFwd struct {
 	Enable bool `json:"enable" note:"是否启用"`
 
-	Tcp []*Fwd `json:"tcp" note:"TCP转发列表"`
-	Udp []*Fwd `json:"udp" note:"UDP"`
+	Items []*Fwd `json:"items" note:"转发列表"`
 }
 
 func (s *NodeFwd) InitId() {
-	c := len(s.Tcp)
+	c := len(s.Items)
 	for i := 0; i < c; i++ {
-		item := s.Tcp[i]
+		item := s.Items[i]
 		if item == nil {
 			continue
 		}
@@ -28,10 +27,10 @@ func (s *NodeFwd) InitId() {
 	}
 }
 
-func (s *NodeFwd) GetTcpFwd(id string) *Fwd {
-	count := len(s.Tcp)
+func (s *NodeFwd) GetItem(id string) *Fwd {
+	count := len(s.Items)
 	for index := 0; index < count; index++ {
-		item := s.Tcp[index]
+		item := s.Items[index]
 		if item == nil {
 			continue
 		}
@@ -43,42 +42,11 @@ func (s *NodeFwd) GetTcpFwd(id string) *Fwd {
 	return nil
 }
 
-func (s *NodeFwd) GetUdpFwd(id string) *Fwd {
-	count := len(s.Udp)
-	for index := 0; index < count; index++ {
-		item := s.Udp[index]
-		if item == nil {
-			continue
-		}
-		if id == item.ID {
-			return item
-		}
-	}
-
-	return nil
-}
-
-func (s *NodeFwd) GetTcpFwdId(listenAddress string, listenPort int) (string, bool) {
+func (s *NodeFwd) GetItemId(listenAddress string, listenPort int) (string, bool) {
 	addr := fmt.Sprintf("%s:%d", listenAddress, listenPort)
-	count := len(s.Tcp)
+	count := len(s.Items)
 	for index := 0; index < count; index++ {
-		item := s.Tcp[index]
-		if item == nil {
-			continue
-		}
-		if addr == fmt.Sprintf("%s:%d", item.ListenAddress, item.ListenPort) {
-			return item.ID, true
-		}
-	}
-
-	return "", false
-}
-
-func (s *NodeFwd) GetUdpFwdId(listenAddress string, listenPort int) (string, bool) {
-	addr := fmt.Sprintf("%s:%d", listenAddress, listenPort)
-	count := len(s.Udp)
-	for index := 0; index < count; index++ {
-		item := s.Udp[index]
+		item := s.Items[index]
 		if item == nil {
 			continue
 		}

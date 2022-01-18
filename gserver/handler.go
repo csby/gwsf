@@ -43,11 +43,17 @@ func newHandler(log gtype.Log, cfg *gcfg.Config, hdl gtype.Handler) (*handler, e
 	})
 
 	otpHandler := gopt.NewHandler(log, cfg, gopt.WebPath, gopt.ApiPath, gdoc.WebPath)
-	otpHandler.Init(instance.router, func(path *gtype.Path, preHandle gtype.HttpHandle, wsc gtype.SocketChannelCollection) {
-		if hdl != nil {
-			hdl.ExtendOptApi(instance.router, path, preHandle, wsc)
-		}
-	})
+	otpHandler.Init(instance.router,
+		func(opt gtype.Option) {
+			if hdl != nil {
+				hdl.ExtendOptSetup(opt)
+			}
+		},
+		func(path *gtype.Path, preHandle gtype.HttpHandle, wsc gtype.SocketChannelCollection) {
+			if hdl != nil {
+				hdl.ExtendOptApi(instance.router, path, preHandle, wsc)
+			}
+		})
 
 	if hdl != nil {
 		hdl.InitRouting(instance.router)

@@ -89,12 +89,12 @@ func (s *Controller) NodeForwardRequest(ctx gtype.Context, ps gtype.Params) {
 }
 
 func (s *Controller) NodeForwardRequestDoc(doc gtype.Doc, method string, uri gtype.Uri) {
-	catalog := s.createCatalog(doc, "结点服务")
+	catalog := s.createCatalog(doc, "节点服务")
 	function := catalog.AddFunction(method, uri, "转发请求")
-	function.SetNote("接收或发送结点的转发数据，该接口保持阻塞至连接关闭")
+	function.SetNote("接收或发送节点的转发数据，该接口保持阻塞至连接关闭")
 	function.SetRemark("该接口需要客户端证书")
-	function.AddInputQuery(true, "instance", "发起结点实例ID", "")
-	function.AddInputQuery(true, "node", "目标结点证书ID", "")
+	function.AddInputQuery(true, "instance", "发起节点实例ID", "")
+	function.AddInputQuery(true, "node", "目标节点证书ID", "")
 	function.AddInputQuery(true, "addr", "目标地址", "")
 	function.AddInputQuery(true, "port", "目标端口", "")
 	function.SetInputExample(&gtype.SocketMessage{ID: 1})
@@ -128,9 +128,9 @@ func (s *Controller) NodeForwardResponse(ctx gtype.Context, ps gtype.Params) {
 }
 
 func (s *Controller) NodeForwardResponseDoc(doc gtype.Doc, method string, uri gtype.Uri) {
-	catalog := s.createCatalog(doc, "结点服务")
+	catalog := s.createCatalog(doc, "节点服务")
 	function := catalog.AddFunction(method, uri, "转发响应")
-	function.SetNote("接收或发送结点的转发数据，该接口保持阻塞至连接关闭")
+	function.SetNote("接收或发送节点的转发数据，该接口保持阻塞至连接关闭")
 	function.SetRemark("该接口需要客户端证书")
 	function.AddInputQuery(true, "id", "转发ID", "")
 	function.SetInputExample(&gtype.SocketMessage{ID: 1})

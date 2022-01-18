@@ -6,7 +6,8 @@ import (
 )
 
 type Handler interface {
-	Init(router gtype.Router, apiExtend func(router gtype.Router, path *gtype.Path, preHandle gtype.HttpHandle, chs *Channels))
+	Init(router gtype.Router, path *gtype.Path, preHandle gtype.HttpHandle,
+		apiExtend func(router gtype.Router, path *gtype.Path, preHandle gtype.HttpHandle, chs *Channels))
 
 	OnlineNodes() []*gtype.Node
 	OnlineForwards(filter *gtype.ForwardInfoFilter) gtype.ForwardInfoArray
@@ -34,8 +35,8 @@ type innerHandler struct {
 	controller *Controller
 }
 
-func (s *innerHandler) Init(router gtype.Router, apiExtend func(router gtype.Router, path *gtype.Path, preHandle gtype.HttpHandle, chs *Channels)) {
-	s.controller = NewController(s.GetLog(), s.cfg, s.chs)
+func (s *innerHandler) Init(router gtype.Router, optPath *gtype.Path, optPreHandle gtype.HttpHandle,
+	apiExtend func(router gtype.Router, path *gtype.Path, preHandle gtype.HttpHandle, chs *Channels)) {
 
 	path := &gtype.Path{
 		Prefix: ApiPath,
@@ -57,6 +58,25 @@ func (s *innerHandler) Init(router gtype.Router, apiExtend func(router gtype.Rou
 	if apiExtend != nil {
 		apiExtend(router, path, preHandle, s.chs)
 	}
+
+	if optPath != nil {
+		s.initOpt(router, optPath, optPreHandle)
+	}
+}
+
+func (s *innerHandler) initOpt(router gtype.Router, path *gtype.Path, preHandle gtype.HttpHandle) {
+	if router == nil || path == nil {
+		return
+	}
+
+	router.POST(path.Uri("/cloud/node/list/all"), preHandle,
+		s.controller.GetNodes, s.controller.GetNodesDoc)
+	router.POST(path.Uri("/cloud/node/list/online"), preHandle,
+		s.controller.GetOnlineNodes, s.controller.GetOnlineNodesDocForOpt)
+	router.POST(path.Uri("/cloud/node/info/mod"), preHandle,
+		s.controller.ModNode, s.controller.ModNodeDoc)
+	router.POST(path.Uri("/cloud/node/info/del"), preHandle,
+		s.controller.DelNode, s.controller.DelNodeDoc)
 }
 
 func (s *innerHandler) OnlineNodes() []*gtype.Node {

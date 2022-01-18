@@ -29,8 +29,8 @@ func (s *Controller) GetOnlineNodes(ctx gtype.Context, ps gtype.Params) {
 }
 
 func (s *Controller) GetOnlineNodesDoc(doc gtype.Doc, method string, uri gtype.Uri) {
-	catalog := doc.AddCatalog("管理平台接口").AddChild("云端服务").AddChild("结点管理")
-	function := catalog.AddFunction(method, uri, "获取在线结点")
+	catalog := doc.AddCatalog("管理平台接口").AddChild("云端服务").AddChild("节点管理")
+	function := catalog.AddFunction(method, uri, "获取在线节点")
 	function.SetNote("获取当前所有在线列表")
 	function.SetOutputDataExample([]*gtype.Node{
 		{
@@ -39,7 +39,7 @@ func (s *Controller) GetOnlineNodesDoc(doc gtype.Doc, method string, uri gtype.U
 				Certificate: gtype.NewGuid(),
 			},
 			Kind:      "client",
-			Name:      "测试结点",
+			Name:      "测试节点",
 			IP:        "192.168.1.100",
 			LoginTime: gtype.DateTime(time.Now()),
 		},
@@ -56,8 +56,8 @@ func (s *Controller) GetForwardNodes(ctx gtype.Context, ps gtype.Params) {
 }
 
 func (s *Controller) GetForwardNodesDoc(doc gtype.Doc, method string, uri gtype.Uri) {
-	catalog := doc.AddCatalog("管理平台接口").AddChild("云端服务").AddChild("结点管理")
-	function := catalog.AddFunction(method, uri, "获取结点转发连接")
+	catalog := doc.AddCatalog("管理平台接口").AddChild("云端服务").AddChild("节点管理")
+	function := catalog.AddFunction(method, uri, "获取节点转发连接")
 	function.SetNote("获取当前所有正在转发的连接列表")
 	function.SetInputJsonExample(&gtype.ForwardInfoFilter{})
 	function.SetOutputDataExample([]*gtype.ForwardInfo{
@@ -72,7 +72,7 @@ func (s *Controller) GetForwardNodesDoc(doc gtype.Doc, method string, uri gtype.
 					Certificate: gtype.NewGuid(),
 				},
 				Kind:      "user",
-				Name:      "发起结点",
+				Name:      "发起节点",
 				IP:        "172.16.1.100",
 				LoginTime: gtype.DateTime(time.Now()),
 			},
@@ -82,7 +82,7 @@ func (s *Controller) GetForwardNodesDoc(doc gtype.Doc, method string, uri gtype.
 					Certificate: gtype.NewGuid(),
 				},
 				Kind:      "client",
-				Name:      "目标结点",
+				Name:      "目标节点",
 				IP:        "192.168.1.100",
 				LoginTime: gtype.DateTime(time.Now()),
 			},

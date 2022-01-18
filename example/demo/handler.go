@@ -29,8 +29,8 @@ func (s *Handler) InitRouting(router gtype.Router) {
 	s.cloudHandler = gcloud.NewHandler(s.GetLog(), &cfg.Config, s.optSocketChannels)
 	s.nodeHandler = gnode.NewHandler(s.GetLog(), &cfg.Config, s.optSocketChannels)
 
-	s.cloudHandler.Init(router, nil)
-	s.nodeHandler.Init()
+	s.cloudHandler.Init(router, nil, nil, nil)
+	s.nodeHandler.Init(nil, nil, nil)
 
 	s.apiController.cloudHandler = s.cloudHandler
 	router.POST(apiPath.Uri("/hello"), nil,
@@ -49,6 +49,9 @@ func (s *Handler) BeforeRouting(ctx gtype.Context) {
 
 func (s *Handler) AfterRouting(ctx gtype.Context) {
 
+}
+
+func (s *Handler) ExtendOptSetup(opt gtype.Option) {
 }
 
 func (s *Handler) ExtendOptApi(router gtype.Router, path *gtype.Path, preHandle gtype.HttpHandle, wsc gtype.SocketChannelCollection) {

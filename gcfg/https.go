@@ -7,4 +7,6 @@ type Https struct {
 	BehindProxy       bool   `json:"behindProxy" note:"是否位于代理服务器之后"`
 	RequestClientCert bool   `json:"requestClientCert" note:"是否要求客户端证书"`
 	Cert              Crt    `json:"cert" note:"证书"`
+
+	Clients []*HttpsClient `json:"clients" note:"客户端"`
 }
