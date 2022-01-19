@@ -137,3 +137,49 @@ func (s *Controller) createOptCatalog(doc gtype.Doc, names ...string) gtype.Cata
 
 	return child
 }
+
+func (s *Controller) GetForwardNodes(ctx gtype.Context, ps gtype.Params) {
+	argument := &gtype.ForwardInfoFilter{}
+	ctx.GetJson(argument)
+	results := s.fwdChannels.Lst(argument)
+
+	ctx.Success(results)
+}
+
+func (s *Controller) GetForwardNodesDoc(doc gtype.Doc, method string, uri gtype.Uri) {
+	catalog := s.createOptCatalog(doc, "云端服务")
+	function := catalog.AddFunction(method, uri, "获取节点转发连接")
+	function.SetNote("获取当前所有正在转发的连接列表")
+	function.SetInputJsonExample(&gtype.ForwardInfoFilter{})
+	function.SetOutputDataExample([]*gtype.ForwardInfo{
+		{
+			ForwardId: gtype.ForwardId{
+				ID: gtype.NewGuid(),
+			},
+			Time: gtype.DateTime(time.Now()),
+			SourceNode: &gtype.Node{
+				ID: gtype.NodeId{
+					Instance:    gtype.NewGuid(),
+					Certificate: gtype.NewGuid(),
+				},
+				Kind:      "user",
+				Name:      "发起节点",
+				IP:        "172.16.1.100",
+				LoginTime: gtype.DateTime(time.Now()),
+			},
+			TargetNode: &gtype.Node{
+				ID: gtype.NodeId{
+					Instance:    gtype.NewGuid(),
+					Certificate: gtype.NewGuid(),
+				},
+				Kind:      "client",
+				Name:      "目标节点",
+				IP:        "192.168.1.100",
+				LoginTime: gtype.DateTime(time.Now()),
+			},
+			TargetHost: "192.168.1.7:8080",
+		},
+	})
+	function.AddOutputError(gtype.ErrInternal)
+	function.AddOutputError(gtype.ErrException)
+}

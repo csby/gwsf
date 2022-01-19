@@ -77,6 +77,8 @@ func (s *innerHandler) initOpt(router gtype.Router, path *gtype.Path, preHandle 
 		s.controller.ModNode, s.controller.ModNodeDoc)
 	router.POST(path.Uri("/cloud/node/info/del"), preHandle,
 		s.controller.DelNode, s.controller.DelNodeDoc)
+	router.POST(path.Uri("/cloud/node/fwd/conn/list"), preHandle,
+		s.controller.GetForwardNodes, s.controller.GetForwardNodesDoc)
 }
 
 func (s *innerHandler) OnlineNodes() []*gtype.Node {
