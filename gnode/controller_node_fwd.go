@@ -1,10 +1,20 @@
 package gnode
 
 import (
-	"cdm/cdmp/data/model"
 	"github.com/csby/gwsf/gcfg"
 	"github.com/csby/gwsf/gtype"
 )
+
+type NodeFwdInputState struct {
+	IsRunning bool `json:"running" note:"状态: true-运行中; false-已停止"`
+}
+
+type NodeFwdInputItemState struct {
+	NodeFwdInputState
+
+	InputId   string `json:"id" note:"标识ID"`
+	LastError string `json:"error" note:"错误信息"`
+}
 
 func (s *innerController) GetNodeFwdInputSvcState(ctx gtype.Context, ps gtype.Params) {
 	if s.node == nil {
@@ -18,7 +28,7 @@ func (s *innerController) GetNodeFwdInputSvcState(ctx gtype.Context, ps gtype.Pa
 		return
 	}
 
-	ctx.Success(model.NodeFwdInputState{
+	ctx.Success(NodeFwdInputState{
 		IsRunning: fwd.IsRunning(),
 	})
 }
@@ -27,7 +37,7 @@ func (s *innerController) GetNodeFwdInputSvcStateDoc(doc gtype.Doc, method strin
 	catalog := s.createCatalog(doc, nodeCatalogRoot, nodeCatalogFwd)
 	function := catalog.AddFunction(method, uri, "获取运行状态")
 	function.SetNote("获取转发运行状态: true-运行中; false-已停止")
-	function.SetOutputDataExample(&model.NodeFwdInputState{IsRunning: true})
+	function.SetOutputDataExample(&NodeFwdInputState{IsRunning: true})
 	function.AddOutputError(gtype.ErrTokenEmpty)
 	function.AddOutputError(gtype.ErrTokenInvalid)
 	function.AddOutputError(gtype.ErrInternal)

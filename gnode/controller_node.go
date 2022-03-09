@@ -1,7 +1,6 @@
 package gnode
 
 import (
-	"cdm/cdmp/data/model"
 	"fmt"
 	"github.com/csby/gwsf/gcfg"
 	"github.com/csby/gwsf/gtype"
@@ -11,6 +10,15 @@ const (
 	nodeCatalogRoot = "节点服务"
 	nodeCatalogFwd  = "端口转发"
 )
+
+type Node struct {
+	ID   string `json:"id" note:"证书标识ID"`
+	Name string `json:"name" note:" 结点名称"`
+}
+
+type NodeOnlineState struct {
+	IsOnline bool `json:"online" note:"状态: true-在线; false-离线"`
+}
 
 func (s *innerController) GetNodeInfo(ctx gtype.Context, ps gtype.Params) {
 	info := &gtype.NodeInfo{
@@ -68,7 +76,7 @@ func (s *innerController) GetNodeOnlineState(ctx gtype.Context, ps gtype.Params)
 		return
 	}
 
-	ctx.Success(model.NodeOnlineState{
+	ctx.Success(NodeOnlineState{
 		IsOnline: cloud.IsConnected(),
 	})
 }
@@ -77,7 +85,7 @@ func (s *innerController) GetNodeOnlineStateDoc(doc gtype.Doc, method string, ur
 	catalog := s.createCatalog(doc, nodeCatalogRoot)
 	function := catalog.AddFunction(method, uri, "获取在线状态")
 	function.SetNote("获取节点在线状态: true-在线; false-离线")
-	function.SetOutputDataExample(&model.NodeOnlineState{
+	function.SetOutputDataExample(&NodeOnlineState{
 		IsOnline: false,
 	})
 	function.AddOutputError(gtype.ErrTokenEmpty)
@@ -109,7 +117,7 @@ func (s *innerController) GetNodeOnlineTargets(ctx gtype.Context, ps gtype.Param
 		return
 	}
 
-	nodes := make([]*model.Node, 0)
+	nodes := make([]*Node, 0)
 	keys := make(map[string]byte, 0)
 	count := len(items)
 	for index := 0; index < count; index++ {
@@ -122,7 +130,7 @@ func (s *innerController) GetNodeOnlineTargets(ctx gtype.Context, ps gtype.Param
 		}
 		keys[item.ID.Certificate] = 0
 
-		node := &model.Node{
+		node := &Node{
 			ID:   item.ID.Certificate,
 			Name: item.Name,
 		}
@@ -136,7 +144,7 @@ func (s *innerController) GetNodeOnlineTargetsDoc(doc gtype.Doc, method string, 
 	catalog := s.createCatalog(doc, nodeCatalogRoot)
 	function := catalog.AddFunction(method, uri, "获取在线目标节点")
 	function.SetNote("获取在线目标节点列表")
-	function.SetOutputDataExample([]*model.Node{
+	function.SetOutputDataExample([]*Node{
 		{
 			ID:   gtype.NewGuid(),
 			Name: "测试节点",
@@ -148,7 +156,7 @@ func (s *innerController) GetNodeOnlineTargetsDoc(doc gtype.Doc, method string, 
 }
 
 func (s *innerController) onNodeOnlineStateChanged(isConnected bool) {
-	s.writeOptMessage(gtype.WSNodeOnlineStateChanged, model.NodeOnlineState{
+	s.writeOptMessage(gtype.WSNodeOnlineStateChanged, NodeOnlineState{
 		IsOnline: isConnected,
 	})
 }

@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 const (
@@ -220,13 +221,18 @@ func (s *SvcUpd) Update(path, updateFile, updateFolder string) error {
 		if err != nil {
 			return fmt.Errorf("stop service '%s' error: %v", s.Name, err)
 		}
+		time.Sleep(time.Second)
 	}
 
 	_, err = os.Stat(path)
 	if !os.IsNotExist(err) {
 		err = os.Remove(path)
 		if err != nil {
-			return fmt.Errorf("delete exxcute file '%s' error: %v", path, err)
+			time.Sleep(time.Second)
+			err = os.Remove(path)
+			if err != nil {
+				return fmt.Errorf("delete exxcute file '%s' error: %v", path, err)
+			}
 		}
 	}
 
