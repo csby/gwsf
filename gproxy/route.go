@@ -14,6 +14,10 @@ type Route struct {
 	// 转发域名，如"my.test.com", ""(全部转发)
 	Domain string
 
+	// 转发路径，如"/document", ""(所有路径)
+	// 目前仅http有效，https暂不支持
+	Path string
+
 	// 目标地址，如"172.16.100.85:8080"
 	Target string
 	// 备用目标地址

@@ -61,18 +61,20 @@ func (s *Server) Start() error {
 			OnDisconnected:       s.onDisconnected,
 		}
 
+		path := ""
 		if len(route.Domain) > 0 {
 			if route.IsTls {
 				s.agent.AddSNIRoute(route.Address, route.Domain, dest)
 			} else {
-				s.agent.AddHTTPHostRoute(route.Address, route.Domain, dest)
+				s.agent.AddHTTPHostRoute(route.Address, route.Domain, route.Path, dest)
+				path = route.Path
 			}
 		} else {
 			s.agent.AddRoute(route.Address, dest)
 		}
 
-		s.LogInfo(fmt.Sprintf("proxy(version=%d, tls=%v): %s, %s => %s",
-			route.Version, route.IsTls, route.Domain, route.Address, route.Targets()))
+		s.LogInfo(fmt.Sprintf("proxy(version=%d, tls=%v): %s%s, %s => %s",
+			route.Version, route.IsTls, route.Domain, path, route.Address, route.Targets()))
 	}
 
 	s.setStatus(StatusStarting)
