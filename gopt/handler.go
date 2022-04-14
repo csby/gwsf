@@ -53,6 +53,7 @@ type innerHandler struct {
 	monitor   *controller.Monitor
 	service   *controller.Service
 	update    *controller.Update
+	database  *controller.Database
 	websocket *controller.Websocket
 }
 
@@ -96,6 +97,7 @@ func (s *innerHandler) mapApi(router gtype.Router, path *gtype.Path) gtype.HttpH
 	s.monitor = controller.NewMonitor(s.GetLog(), s.cfg)
 	s.service = controller.NewService(s.GetLog(), s.cfg, s.svcMgr)
 	s.update = controller.NewUpdate(s.GetLog(), s.cfg, s.svcMgr)
+	s.database = controller.NewDatabase(s.GetLog(), s.cfg)
 	s.websocket = controller.NewWebsocket(s.GetLog(), s.cfg, s.dbToken, s.wsc)
 
 	if s.cfg != nil {
@@ -177,6 +179,10 @@ func (s *innerHandler) mapApi(router gtype.Router, path *gtype.Path) gtype.HttpH
 		s.site.GetAppInfo, s.site.GetAppInfoDoc)
 	router.POST(path.Uri("/site/app/upload"), tokenChecker,
 		s.site.UploadApp, s.site.UploadAppDoc)
+
+	// 数据库
+	router.POST(path.Uri("/db/mssql/instance/list"), tokenChecker,
+		s.database.GetSqlServerInstances, s.database.GetSqlServerInstancesDoc)
 
 	// 通知推送
 	router.GET(path.Uri("/websocket/notify").SetTokenPlace(gtype.TokenPlaceQuery).SetIsWebsocket(true),

@@ -72,6 +72,7 @@ func (s *innerForward) Start() {
 	s.buildForwards()
 
 	// tcp
+	s.tcpInputs = make([]*gfwd.InputTcp, 0)
 	count := len(s.tcpForwards)
 	for index := 0; index < count; index++ {
 		fwd := s.tcpForwards[index]
@@ -93,6 +94,7 @@ func (s *innerForward) Start() {
 	}
 
 	// udp
+	s.udpInputs = make([]*gfwd.InputUdp, 0)
 	count = len(s.udpForwards)
 	for index := 0; index < count; index++ {
 		fwd := s.udpForwards[index]
