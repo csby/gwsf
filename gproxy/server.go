@@ -11,10 +11,12 @@ import (
 type Server struct {
 	gtype.Base
 
-	Routes         []Route
-	StatusChanged  func(status Status)
-	OnConnected    func(link Link)
-	OnDisconnected func(link Link)
+	Routes                   []Route
+	StatusChanged            func(status Status)
+	OnConnected              func(link Link)
+	OnDisconnected           func(link Link)
+	OnTargetAliveChanged     func(item *TargetAddressItem)
+	OnTargetConnCountChanged func(item *TargetAddressItem, increase bool)
 
 	agent           *tcpproxy.Proxy
 	status          Status
@@ -49,7 +51,12 @@ func (s *Server) Start() error {
 		if len(route.Target) < 1 {
 			continue
 		}
-		address := &TargetAddress{}
+		address := &TargetAddress{
+			SourceId:     route.SourceId,
+			TargetId:     route.TargetId,
+			AliveChanged: s.OnTargetAliveChanged,
+			CountChanged: s.OnTargetConnCountChanged,
+		}
 		address.SetAddress(route.Target)
 		address.AddAddress(route.SpareTargets)
 		s.targetAddresses = append(s.targetAddresses, address)
@@ -144,6 +151,7 @@ func (s *Server) setStatus(status Status) {
 		return
 	}
 	s.status = status
+	fmt.Println("status", s.status)
 
 	if s.StatusChanged != nil {
 		s.StatusChanged(status)
@@ -178,6 +186,18 @@ func (s *Server) onDisconnected(id, addr, domain, source, target string) {
 	}
 }
 
+func (s *Server) onTargetConnCountChanged(item *TargetAddressItem, increase bool) {
+	if s.OnTargetConnCountChanged != nil {
+		s.OnTargetConnCountChanged(item, increase)
+	}
+}
+
+func (s *Server) onTargetAliveChanged(item *TargetAddressItem) {
+	if s.OnTargetAliveChanged != nil {
+		s.OnTargetAliveChanged(item)
+	}
+}
+
 func (s *Server) isAlive(addr string) error {
 	if len(addr) < 1 {
 		return fmt.Errorf("address is empty")
@@ -193,7 +213,7 @@ func (s *Server) isAlive(addr string) error {
 	return nil
 }
 
-func (s Server) doAliveChecking() {
+func (s *Server) doAliveChecking() {
 	defer func() {
 		if err := recover(); err != nil {
 			s.isAliveChecking = false
@@ -222,10 +242,6 @@ func (s Server) doAliveChecking() {
 
 			items := targetAddress.Items()
 			c := len(items)
-			if c < 2 {
-				continue
-			}
-			isAliveChanged := false
 			for i := 0; i < c; i++ {
 				item := items[i]
 				if item == nil {
@@ -233,17 +249,10 @@ func (s Server) doAliveChecking() {
 				}
 				err := s.isAlive(item.Addr)
 				if err != nil {
-					item.Alive = false
+					item.SetAlive(false)
 				} else {
-					if item.Alive == false {
-						item.Alive = true
-						isAliveChanged = true
-					}
+					item.SetAlive(true)
 				}
-			}
-
-			if isAliveChanged {
-				targetAddress.ResetCount()
 			}
 		}
 

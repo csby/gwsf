@@ -4,6 +4,11 @@ import "strings"
 
 // Route 转发路由
 type Route struct {
+	// identifier of listen address and port
+	SourceId string
+	// identifier of router target
+	TargetId string
+
 	// ture: the incoming TLS SNI server name is sni;
 	// false: the incoming HTTP/1.x Host header name is httpHost
 	IsTls bool
