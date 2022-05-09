@@ -151,7 +151,6 @@ func (s *Server) setStatus(status Status) {
 		return
 	}
 	s.status = status
-	fmt.Println("status", s.status)
 
 	if s.StatusChanged != nil {
 		s.StatusChanged(status)
