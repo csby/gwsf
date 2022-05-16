@@ -105,3 +105,46 @@ func (s *Zip) DecompressMemory(source []byte, destination string) error {
 
 	return nil
 }
+
+// 从内存解压
+// source：待解压二进制数据
+// destination：解压后文件后回调函数
+func (s *Zip) DecompressMemoryToFun(source []byte, destination func(folderName, fileName string, fileReader io.Reader) error) error {
+	br := bytes.NewReader(source)
+	reader, err := zip.NewReader(br, int64(len(source)))
+	if err != nil {
+		return err
+	}
+
+	folderName := ""
+	for _, file := range reader.File {
+		rc, err := file.Open()
+		if err != nil {
+			return err
+		}
+
+		fileName := file.Name
+		if file.NonUTF8 {
+			if !utf8.ValidString(fileName) {
+				transformName, _, err := transform.String(simplifiedchinese.GBK.NewDecoder(), fileName)
+				if err == nil {
+					fileName = transformName
+				}
+			}
+		}
+		if file.FileInfo().IsDir() {
+			folderName = fileName
+		} else {
+			if destination != nil {
+				e := destination(folderName, fileName, rc)
+				if e != nil {
+					rc.Close()
+					return e
+				}
+			}
+		}
+		rc.Close()
+	}
+
+	return nil
+}
