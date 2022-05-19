@@ -14,7 +14,7 @@ import (
 type Zip struct {
 }
 
-// 解压文件
+// DecompressFile 解压文件
 // source：待解压文件路径
 // destination：解压后文件所在目录路径
 func (s *Zip) DecompressFile(source, destination string) error {
@@ -51,7 +51,7 @@ func (s *Zip) DecompressFile(source, destination string) error {
 	return nil
 }
 
-// 从内存解压
+// DecompressMemory 从内存解压
 // source：待解压二进制数据
 // destination：解压后文件所在目录路径
 func (s *Zip) DecompressMemory(source []byte, destination string) error {
@@ -106,7 +106,7 @@ func (s *Zip) DecompressMemory(source []byte, destination string) error {
 	return nil
 }
 
-// 从内存解压
+// DecompressMemoryToFun 从内存解压
 // source：待解压二进制数据
 // destination：解压后文件后回调函数
 func (s *Zip) DecompressMemoryToFun(source []byte, destination func(folderName, fileName string, fileReader io.Reader) error) error {

@@ -12,7 +12,7 @@ import (
 type Tar struct {
 }
 
-// 从内存解压
+// DecompressMemory 从内存解压
 // source：待解压二进制数据
 // destination：解压后文件所在目录路径
 func (s *Tar) DecompressMemory(source []byte, destination string) error {

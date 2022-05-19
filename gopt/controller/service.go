@@ -62,6 +62,10 @@ func (s *Service) Info(ctx gtype.Context, ps gtype.Params) {
 		data.Remark = cfg.Module.Remark
 		data.DownloadTitle = cfg.Svc.DownloadTitle
 		data.DownloadUrl = cfg.Svc.DownloadUrl
+
+		if len(cfg.Svc.Name) > 0 {
+			data.Name = cfg.Svc.Name
+		}
 	}
 
 	ctx.Success(data)
