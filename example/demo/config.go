@@ -75,10 +75,11 @@ func NewConfig() *Config {
 					DownloadUrl:   "https://github.com/csby/gwsf-doc/releases",
 				},
 				Opt: gcfg.SiteOpt{
-					Users: []gcfg.SiteOptUser{
+					Users: []*gcfg.SiteOptUser{
 						{
-							"Admin",
-							"1",
+							Account:  "Admin",
+							Password: "1",
+							Name:     "管理员",
 						},
 					},
 				},

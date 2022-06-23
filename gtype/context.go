@@ -5,6 +5,10 @@ import (
 	"time"
 )
 
+const (
+	CtxUserAccount = "ctx_user_account"
+)
+
 type Context interface {
 	Request() *http.Request
 	Response() http.ResponseWriter

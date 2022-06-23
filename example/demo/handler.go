@@ -54,7 +54,11 @@ func (s *Handler) AfterRouting(ctx gtype.Context) {
 func (s *Handler) ExtendOptSetup(opt gtype.Option) {
 }
 
-func (s *Handler) ExtendOptApi(router gtype.Router, path *gtype.Path, preHandle gtype.HttpHandle, wsc gtype.SocketChannelCollection) {
+func (s *Handler) ExtendOptApi(router gtype.Router,
+	path *gtype.Path,
+	preHandle gtype.HttpHandle,
+	wsc gtype.SocketChannelCollection,
+	tdb gtype.TokenDatabase) {
 	s.optSocketChannels = wsc
 
 	router.POST(path.Uri("/node/list/online"), preHandle,

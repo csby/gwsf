@@ -253,6 +253,7 @@ func (s *Auth) CreateTokenForAccountPassword(items []gtype.TokenAuth, ctx gtype.
 func (s *Auth) Authenticate(ctx gtype.Context, account, password string) (*gtype.Login, gtype.Error, error) {
 	act := strings.ToLower(account)
 	pwd := password
+	userName := account
 
 	var err error = nil
 	if s.AccountVerification != nil {
@@ -265,7 +266,7 @@ func (s *Auth) Authenticate(ctx gtype.Context, account, password string) (*gtype
 		userCount := len(s.cfg.Site.Opt.Users)
 		for index := 0; index < userCount; index++ {
 			if act == strings.ToLower(s.cfg.Site.Opt.Users[index].Account) {
-				user = &s.cfg.Site.Opt.Users[index]
+				user = s.cfg.Site.Opt.Users[index]
 				break
 			}
 		}
@@ -273,6 +274,9 @@ func (s *Auth) Authenticate(ctx gtype.Context, account, password string) (*gtype
 		if user != nil {
 			if pwd != user.Password {
 				return nil, gtype.ErrLoginPasswordInvalid, nil
+			}
+			if len(user.Name) > 0 {
+				userName = user.Name
 			}
 		} else {
 			if s.ldap.Enable {
@@ -286,7 +290,6 @@ func (s *Auth) Authenticate(ctx gtype.Context, account, password string) (*gtype
 		}
 	}
 
-	userName := account
 	now := time.Now()
 	token := &gtype.Token{
 		ID:          ctx.NewGuid(),
@@ -335,6 +338,8 @@ func (s *Auth) CheckToken(ctx gtype.Context, ps gtype.Params) {
 		ctx.SetHandled(true)
 		return
 	}
+
+	ctx.Set(gtype.CtxUserAccount, tokenModel.UserAccount)
 }
 
 func (s *Auth) onWebsocketWriteFilter(message *gtype.SocketMessage, channel gtype.SocketChannel, token *gtype.Token) bool {

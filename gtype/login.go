@@ -43,4 +43,5 @@ type LoginAccount struct {
 	Name      string   `json:"name" note:"用户姓名"`
 	LoginTime DateTime `json:"loginTime" note:"登录时间"`
 	LoginIp   string   `json:"loginIp" note:"登录IP地址"`
+	Role      int      `json:"role" note:"角色: 1-管理员"`
 }

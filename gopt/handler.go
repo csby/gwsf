@@ -8,7 +8,9 @@ import (
 )
 
 type Handler interface {
-	Init(router gtype.Router, setup func(opt gtype.Option), api func(path *gtype.Path, preHandle gtype.HttpHandle, wsc gtype.SocketChannelCollection))
+	Init(router gtype.Router,
+		setup func(opt gtype.Option),
+		api func(path *gtype.Path, preHandle gtype.HttpHandle, wsc gtype.SocketChannelCollection, tdb gtype.TokenDatabase))
 }
 
 func NewHandler(log gtype.Log, cfg *gcfg.Config, webPrefix, apiPrefix, docWebPrefix string) Handler {
@@ -59,7 +61,7 @@ type innerHandler struct {
 
 func (s *innerHandler) Init(router gtype.Router,
 	setup func(opt gtype.Option),
-	api func(path *gtype.Path, preHandle gtype.HttpHandle, wsc gtype.SocketChannelCollection)) {
+	api func(path *gtype.Path, preHandle gtype.HttpHandle, wsc gtype.SocketChannelCollection, tdb gtype.TokenDatabase)) {
 	if setup != nil {
 		setup(s)
 	}
@@ -73,7 +75,7 @@ func (s *innerHandler) Init(router gtype.Router,
 	}
 
 	if api != nil {
-		api(s.apiPath, tokenChecker, s.wsc)
+		api(s.apiPath, tokenChecker, s.wsc, s.dbToken)
 	}
 }
 
@@ -125,6 +127,15 @@ func (s *innerHandler) mapApi(router gtype.Router, path *gtype.Path) gtype.HttpH
 	// 获取在线用户
 	router.POST(path.Uri("/online/users"), tokenChecker,
 		s.user.GetOnlineUsers, s.user.GetOnlineUsersDoc)
+	// 获取用户列表
+	router.POST(path.Uri("/user/list"), tokenChecker,
+		s.user.GetList, s.user.GetListDoc)
+	// 新建用户
+	router.POST(path.Uri("/user/create"), tokenChecker,
+		s.user.Create, s.user.CreateDoc)
+	// 新建用户
+	router.POST(path.Uri("/user/password/reset"), tokenChecker,
+		s.user.ResetPassword, s.user.ResetPasswordDoc)
 
 	// 系统角色
 	router.POST(path.Uri("/sys/role/server"), tokenChecker,

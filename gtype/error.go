@@ -20,6 +20,8 @@ var (
 	ErrLoginAccountNotExit           = newError(202, "账号不存在")
 	ErrLoginPasswordInvalid          = newError(203, "密码不正确")
 	ErrLoginAccountOrPasswordInvalid = newError(204, "账号或密码不正确")
+
+	ErrNoPermission = newError(301, "没有权限")
 )
 
 type Error interface {
