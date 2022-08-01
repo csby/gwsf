@@ -7,8 +7,10 @@ import (
 )
 
 const (
-	WSOptUserLogin  = 101 // 用户登陆
-	WSOptUserLogout = 102 // 用户注销
+	WSOptUserLogin   = 101 // 用户登陆
+	WSOptUserLogout  = 102 // 用户注销
+	WSOptUserOnline  = 103 // 用户上线
+	WSOptUserOffline = 104 // 用户下线
 
 	WSSiteUpload         = 110 // 上传并发布应用网站
 	WSRootSiteUploadFile = 111 // 根站点-上传文件
@@ -30,6 +32,10 @@ const (
 	WSNodeOnlineStateChanged      = 140 // 节点在线状态改变
 	WSNodeFwdInputListenSvcState  = 141 // 节点转发服务状态
 	WSNodeFwdInputListenItemState = 142 // 节点转发项目状态
+
+	WSNetworkThroughput = 211 // 网络吞吐量
+	WSCpuUsage          = 212 // CPU使用率
+	WSMemUsage          = 213 // 内存使用率
 )
 
 type SocketMessage struct {

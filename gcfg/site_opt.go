@@ -33,3 +33,28 @@ func (s *SiteOpt) GetUser(account string) *SiteOptUser {
 
 	return nil
 }
+
+func (s *SiteOpt) RemoveUser(account string) int {
+	act := strings.ToLower(account)
+
+	users := make([]*SiteOptUser, 0)
+	c := len(s.Users)
+	for i := 0; i < c; i++ {
+		u := s.Users[i]
+		if u == nil {
+			continue
+		}
+		if act == strings.ToLower(u.Account) {
+			continue
+		}
+
+		users = append(users, u)
+	}
+
+	mc := c - len(users)
+	if mc > 0 {
+		s.Users = users
+	}
+
+	return mc
+}

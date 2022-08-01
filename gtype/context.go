@@ -22,6 +22,7 @@ type Context interface {
 	OutputSoap(v interface{})
 	Success(data interface{})
 	Error(err Error, detail ...interface{})
+	ErrorWithData(data interface{}, err Error, detail ...interface{})
 
 	EnterTime() time.Time
 	LeaveTime() time.Time

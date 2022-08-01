@@ -227,6 +227,26 @@ func (s *context) Error(err gtype.Error, detail ...interface{}) {
 	s.OutputJson(result)
 }
 
+func (s *context) ErrorWithData(data interface{}, err gtype.Error, detail ...interface{}) {
+	result := &gtype.Result{
+		Code:   err.Code(),
+		Elapse: time.Now().Sub(s.enterTime).String(),
+		Serial: s.rid,
+		Data:   data,
+	}
+	result.Error.Summary = err.Summary()
+	details := fmt.Sprint(detail...)
+	if len(details) > 0 {
+		result.Error.Detail = details
+	} else {
+		result.Error.Detail = err.Detail()
+	}
+
+	s.outputCode = &result.Code
+
+	s.OutputJson(result)
+}
+
 func (s *context) IsError() bool {
 	if s.outputCode == nil {
 		return false

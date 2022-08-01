@@ -2,6 +2,7 @@ package controller
 
 import (
 	"fmt"
+	"github.com/csby/gwsf/gcfg"
 	"github.com/go-ldap/ldap"
 	"strings"
 )
@@ -74,4 +75,15 @@ func (s *Ldap) getDomain() string {
 	}
 
 	return sb.String()
+}
+
+func (s *Ldap) init(c *gcfg.SiteOptLdap) {
+	if c == nil {
+		return
+	}
+
+	s.Enable = c.Enable
+	s.Host = c.Host
+	s.Port = c.Port
+	s.Base = c.Base
 }

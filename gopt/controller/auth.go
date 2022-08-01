@@ -19,7 +19,7 @@ type Auth struct {
 	controller
 
 	errorCount   map[string]int
-	ldap         Ldap
+	ldap         *Ldap
 	captchaStore base64Captcha.Store
 	rsaPrivate   grsa.Private
 
@@ -36,11 +36,9 @@ func NewAuth(log gtype.Log, cfg *gcfg.Config, db gtype.TokenDatabase, chs gtype.
 	instance.captchaStore = base64Captcha.DefaultMemStore
 	instance.rsaPrivate.Create(1024)
 
+	instance.ldap = &Ldap{}
 	if cfg != nil {
-		instance.ldap.Enable = cfg.Site.Opt.Ldap.Enable
-		instance.ldap.Host = cfg.Site.Opt.Ldap.Host
-		instance.ldap.Port = cfg.Site.Opt.Ldap.Port
-		instance.ldap.Base = cfg.Site.Opt.Ldap.Base
+		instance.ldap.init(&cfg.Site.Opt.Ldap)
 	}
 
 	if chs != nil {
@@ -208,7 +206,7 @@ func (s *Auth) Logout(ctx gtype.Context, ps gtype.Params) {
 		return
 	}
 
-	s.writeWebSocketMessage(ctx.Token(), gtype.WSOptUserLogout, nil)
+	s.writeWebSocketMessage(ctx.Token(), gtype.WSOptUserLogout, tv)
 	ok = s.dbToken.Del(tv)
 	if ok {
 	}
@@ -221,6 +219,93 @@ func (s *Auth) LogoutDoc(doc gtype.Doc, method string, uri gtype.Uri) {
 	function := catalog.AddFunction(method, uri, "退出登录")
 	function.SetNote("退出登录, 使当前凭证失效")
 	function.SetOutputDataExample(nil)
+	function.AddOutputError(gtype.ErrTokenEmpty)
+	function.AddOutputError(gtype.ErrTokenInvalid)
+}
+
+func (s *Auth) SetLdap(ctx gtype.Context, ps gtype.Params) {
+	if s.cfg == nil {
+		ctx.Error(gtype.ErrInternal, "cfg is nil")
+		return
+	}
+	if s.cfg.Load == nil {
+		ctx.Error(gtype.ErrInternal, "load not config")
+		return
+	}
+	if s.cfg.Save == nil {
+		ctx.Error(gtype.ErrInternal, "save not config")
+		return
+	}
+
+	token := s.getToken(ctx.Token())
+	if token == nil {
+		ctx.Error(gtype.ErrInternal, "凭证无效")
+		return
+	}
+	if strings.ToLower(token.UserAccount) != adminAccount {
+		ctx.Error(gtype.ErrNoPermission, fmt.Sprintf("只有内置管理员帐号(%s)才能进行操作", adminAccount))
+		return
+	}
+
+	argument := &gcfg.SiteOptLdap{}
+	err := ctx.GetJson(&argument)
+	if err != nil {
+		ctx.Error(gtype.ErrInput, err)
+		return
+	}
+
+	cfg, err := s.cfg.Load()
+	if err != nil {
+		ctx.Error(gtype.ErrInternal, fmt.Errorf("load config fail: %s", err.Error()))
+		return
+	}
+	count := argument.CopyTo(&cfg.Site.Opt.Ldap)
+	if count < 1 {
+		ctx.Success(count)
+		return
+	}
+	err = s.cfg.Save(cfg)
+	if err != nil {
+		ctx.Error(gtype.ErrInternal, fmt.Errorf("save config fail: %s", err.Error()))
+		return
+	}
+
+	argument.CopyTo(&s.cfg.Site.Opt.Ldap)
+	s.ldap.init(argument)
+
+	ctx.Success(count)
+}
+
+func (s *Auth) SetLdapDoc(doc gtype.Doc, method string, uri gtype.Uri) {
+	catalog := s.createCatalog(doc, "用户管理")
+	function := catalog.AddFunction(method, uri, "设置LDAP")
+	function.SetNote("修改LDAP配置,成功时返回被修改属性的数量")
+	function.SetInputJsonExample(&gcfg.SiteOptLdap{
+		Host: "192.168.1.1",
+		Port: 389,
+		Base: "dc=example,dc=com",
+	})
+	function.SetOutputDataExample(0)
+	function.AddOutputError(gtype.ErrTokenEmpty)
+	function.AddOutputError(gtype.ErrTokenInvalid)
+	function.AddOutputError(gtype.ErrInput)
+	function.AddOutputError(gtype.ErrNoPermission)
+	function.AddOutputError(gtype.ErrExist)
+}
+
+func (s *Auth) GetLdap(ctx gtype.Context, ps gtype.Params) {
+	ctx.Success(&s.cfg.Site.Opt.Ldap)
+}
+
+func (s *Auth) GetLdapDoc(doc gtype.Doc, method string, uri gtype.Uri) {
+	catalog := s.createCatalog(doc, "用户管理")
+	function := catalog.AddFunction(method, uri, "获取LDAP")
+	function.SetNote("获取LDAP配置")
+	function.SetOutputDataExample(&gcfg.SiteOptLdap{
+		Host: "192.168.1.1",
+		Port: 389,
+		Base: "dc=example,dc=com",
+	})
 	function.AddOutputError(gtype.ErrTokenEmpty)
 	function.AddOutputError(gtype.ErrTokenInvalid)
 }

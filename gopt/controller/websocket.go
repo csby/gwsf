@@ -48,6 +48,7 @@ func (s *Websocket) Notify(ctx gtype.Context, ps gtype.Params) {
 		s.wsChannels.Write(&gtype.SocketMessage{
 			ID: gtype.WSOptUserLogin,
 			Data: &gtype.OnlineUser{
+				Token:       ctx.Token(),
 				UserAccount: token.UserAccount,
 				UserName:    token.UserName,
 				LoginIP:     token.LoginIP,
@@ -57,6 +58,8 @@ func (s *Websocket) Notify(ctx gtype.Context, ps gtype.Params) {
 	}
 	channel := s.wsChannels.NewChannel(token)
 	defer s.wsChannels.Remove(channel)
+	s.wsChannels.Write(&gtype.SocketMessage{ID: gtype.WSOptUserOnline}, nil)
+	defer s.wsChannels.Write(&gtype.SocketMessage{ID: gtype.WSOptUserOffline}, nil)
 
 	waitGroup := &sync.WaitGroup{}
 	stopWrite := make(chan bool, 2)

@@ -127,15 +127,30 @@ func (s *innerHandler) mapApi(router gtype.Router, path *gtype.Path) gtype.HttpH
 	// 获取在线用户
 	router.POST(path.Uri("/online/users"), tokenChecker,
 		s.user.GetOnlineUsers, s.user.GetOnlineUsersDoc)
-	// 获取用户列表
-	router.POST(path.Uri("/user/list"), tokenChecker,
+	// 获取本地用户列表
+	router.POST(path.Uri("/user/local/list"), tokenChecker,
 		s.user.GetList, s.user.GetListDoc)
-	// 新建用户
-	router.POST(path.Uri("/user/create"), tokenChecker,
+	// 新建本地用户
+	router.POST(path.Uri("/user/local/create"), tokenChecker,
 		s.user.Create, s.user.CreateDoc)
-	// 新建用户
-	router.POST(path.Uri("/user/password/reset"), tokenChecker,
+	// 删除本地用户
+	router.POST(path.Uri("/user/local/delete"), tokenChecker,
+		s.user.Delete, s.user.DeleteDoc)
+	// 修改本地用户
+	router.POST(path.Uri("/user/local/modify"), tokenChecker,
+		s.user.Modify, s.user.ModifyDoc)
+	// 重置本地用户密码
+	router.POST(path.Uri("/user/local/password/reset"), tokenChecker,
 		s.user.ResetPassword, s.user.ResetPasswordDoc)
+	// 修改本地用户密码
+	router.POST(path.Uri("/user/local/password/change"), tokenChecker,
+		s.user.ChangePassword, s.user.ChangePasswordDoc)
+	// 获取LDAP设置
+	router.POST(path.Uri("/user/ldap/get"), tokenChecker,
+		s.auth.GetLdap, s.auth.GetLdapDoc)
+	//  修改LDAP设置
+	router.POST(path.Uri("/user/ldap/set"), tokenChecker,
+		s.auth.SetLdap, s.auth.SetLdapDoc)
 
 	// 系统角色
 	router.POST(path.Uri("/sys/role/server"), tokenChecker,

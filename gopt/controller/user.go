@@ -109,7 +109,7 @@ func (s *User) GetList(ctx gtype.Context, ps gtype.Params) {
 
 func (s *User) GetListDoc(doc gtype.Doc, method string, uri gtype.Uri) {
 	catalog := s.createCatalog(doc, "用户管理")
-	function := catalog.AddFunction(method, uri, "获取用户列表")
+	function := catalog.AddFunction(method, uri, "获取本地用户列表")
 	function.SetNote("获取所有用户")
 	function.SetOutputDataExample([]gtype.AccountInfo{
 		{
@@ -142,7 +142,7 @@ func (s *User) Create(ctx gtype.Context, ps gtype.Params) {
 		return
 	}
 	if strings.ToLower(token.UserAccount) != adminAccount {
-		ctx.Error(gtype.ErrNoPermission, fmt.Sprintf("只有管理员帐号(%s)才能新建用户", adminAccount))
+		ctx.Error(gtype.ErrNoPermission, fmt.Sprintf("只有内置管理员帐号(%s)才能新建用户", adminAccount))
 		return
 	}
 
@@ -193,7 +193,7 @@ func (s *User) Create(ctx gtype.Context, ps gtype.Params) {
 
 func (s *User) CreateDoc(doc gtype.Doc, method string, uri gtype.Uri) {
 	catalog := s.createCatalog(doc, "用户管理")
-	function := catalog.AddFunction(method, uri, "新建用户")
+	function := catalog.AddFunction(method, uri, "新建本地用户")
 	function.SetNote("创建新的系统用户")
 	function.SetInputJsonExample(&gtype.AccountCreate{
 		Account: "zs",
@@ -243,7 +243,7 @@ func (s *User) Modify(ctx gtype.Context, ps gtype.Params) {
 	}
 	if strings.ToLower(token.UserAccount) != strings.ToLower(account) {
 		if strings.ToLower(token.UserAccount) != adminAccount {
-			ctx.Error(gtype.ErrNoPermission, fmt.Sprintf("只有管理员帐号(%s)才能修改其他用户的基本信息", adminAccount))
+			ctx.Error(gtype.ErrNoPermission, fmt.Sprintf("只有内置管理员帐号(%s)才能修改其他用户的基本信息", adminAccount))
 			return
 		}
 	}
@@ -279,9 +279,91 @@ func (s *User) Modify(ctx gtype.Context, ps gtype.Params) {
 
 func (s *User) ModifyDoc(doc gtype.Doc, method string, uri gtype.Uri) {
 	catalog := s.createCatalog(doc, "用户管理")
-	function := catalog.AddFunction(method, uri, "修改用户信息")
-	function.SetNote("修改用户姓名等基本信息")
+	function := catalog.AddFunction(method, uri, "修改本地用户信息")
+	function.SetNote("修改本地用户姓名等基本信息")
 	function.SetInputJsonExample(&gtype.AccountEdit{
+		Account: "zs",
+	})
+	function.SetOutputDataExample(nil)
+	function.AddOutputError(gtype.ErrTokenEmpty)
+	function.AddOutputError(gtype.ErrTokenInvalid)
+	function.AddOutputError(gtype.ErrInput)
+	function.AddOutputError(gtype.ErrNoPermission)
+	function.AddOutputError(gtype.ErrExist)
+}
+
+func (s *User) Delete(ctx gtype.Context, ps gtype.Params) {
+	if s.cfg == nil {
+		ctx.Error(gtype.ErrInternal, "cfg is nil")
+		return
+	}
+	if s.cfg.Load == nil {
+		ctx.Error(gtype.ErrInternal, "load not config")
+		return
+	}
+	if s.cfg.Save == nil {
+		ctx.Error(gtype.ErrInternal, "save not config")
+		return
+	}
+
+	token := s.getToken(ctx.Token())
+	if token == nil {
+		ctx.Error(gtype.ErrInternal, "凭证无效")
+		return
+	}
+	if strings.ToLower(token.UserAccount) != adminAccount {
+		ctx.Error(gtype.ErrNoPermission, fmt.Sprintf("只有内置管理员帐号(%s)才能删除其他用户", adminAccount))
+		return
+	}
+
+	argument := &gtype.AccountDelete{}
+	err := ctx.GetJson(&argument)
+	if err != nil {
+		ctx.Error(gtype.ErrInput, err)
+		return
+	}
+	account := strings.TrimSpace(argument.Account)
+	if len(account) < 1 {
+		ctx.Error(gtype.ErrInput, "帐号为空")
+		return
+	}
+	if account == adminAccount {
+		ctx.Error(gtype.ErrNotSupport, fmt.Sprintf("不能删除内置管理员帐号(%s)", adminAccount))
+		return
+	}
+
+	site := &s.cfg.Site.Opt
+	user := site.GetUser(account)
+	if user == nil {
+		ctx.Error(gtype.ErrNotExist, fmt.Sprintf("帐号(%s)不存在", account))
+		return
+	}
+
+	cfg, err := s.cfg.Load()
+	if err != nil {
+		ctx.Error(gtype.ErrInternal, fmt.Errorf("load config fail: %s", err.Error()))
+		return
+	}
+	cfgSite := &cfg.Site.Opt
+	if cfgSite.RemoveUser(account) < 1 {
+		ctx.Error(gtype.ErrInternal, fmt.Sprintf("帐号(%s)不存在", account))
+		return
+	}
+	err = s.cfg.Save(cfg)
+	if err != nil {
+		ctx.Error(gtype.ErrInternal, fmt.Errorf("save config fail: %s", err.Error()))
+		return
+	}
+
+	site.RemoveUser(account)
+	ctx.Success(argument.Account)
+}
+
+func (s *User) DeleteDoc(doc gtype.Doc, method string, uri gtype.Uri) {
+	catalog := s.createCatalog(doc, "用户管理")
+	function := catalog.AddFunction(method, uri, "删除本地用户")
+	function.SetNote("删除本地用户, 内置管理才能操作")
+	function.SetInputJsonExample(&gtype.AccountDelete{
 		Account: "zs",
 	})
 	function.SetOutputDataExample(nil)
@@ -312,7 +394,7 @@ func (s *User) ResetPassword(ctx gtype.Context, ps gtype.Params) {
 		return
 	}
 	if strings.ToLower(token.UserAccount) != adminAccount {
-		ctx.Error(gtype.ErrNoPermission, fmt.Sprintf("只有管理员帐号(%s)才能重置用户密码", adminAccount))
+		ctx.Error(gtype.ErrNoPermission, fmt.Sprintf("只有内置管理员帐号(%s)才能重置用户密码", adminAccount))
 		return
 	}
 
@@ -358,9 +440,90 @@ func (s *User) ResetPassword(ctx gtype.Context, ps gtype.Params) {
 
 func (s *User) ResetPasswordDoc(doc gtype.Doc, method string, uri gtype.Uri) {
 	catalog := s.createCatalog(doc, "用户管理")
-	function := catalog.AddFunction(method, uri, "重置密码")
-	function.SetNote("重置密码用户的登录密码")
+	function := catalog.AddFunction(method, uri, "重置本地用户密码")
+	function.SetNote("重置用户的登录密码,内置管理员才能操作")
 	function.SetInputJsonExample(&gtype.AccountPasswordReset{
+		Account: "zs",
+	})
+	function.SetOutputDataExample(nil)
+	function.AddOutputError(gtype.ErrTokenEmpty)
+	function.AddOutputError(gtype.ErrTokenInvalid)
+	function.AddOutputError(gtype.ErrInput)
+	function.AddOutputError(gtype.ErrNoPermission)
+	function.AddOutputError(gtype.ErrExist)
+}
+
+func (s *User) ChangePassword(ctx gtype.Context, ps gtype.Params) {
+	if s.cfg == nil {
+		ctx.Error(gtype.ErrInternal, "cfg is nil")
+		return
+	}
+	if s.cfg.Load == nil {
+		ctx.Error(gtype.ErrInternal, "load not config")
+		return
+	}
+	if s.cfg.Save == nil {
+		ctx.Error(gtype.ErrInternal, "save not config")
+		return
+	}
+
+	token := s.getToken(ctx.Token())
+	if token == nil {
+		ctx.Error(gtype.ErrInternal, "凭证无效")
+		return
+	}
+	argument := &gtype.AccountPasswordChange{}
+	err := ctx.GetJson(&argument)
+	if err != nil {
+		ctx.Error(gtype.ErrInput, err)
+		return
+	}
+	if len(argument.Account) < 1 {
+		argument.Account = token.UserAccount
+	}
+	account := strings.TrimSpace(argument.Account)
+	if len(account) < 1 {
+		ctx.Error(gtype.ErrInput, "帐号为空")
+		return
+	}
+	site := &s.cfg.Site.Opt
+	user := site.GetUser(account)
+	if user == nil {
+		ctx.Error(gtype.ErrNotExist, fmt.Sprintf("帐号(%s)不存在", account))
+		return
+	}
+	oldPassword := strings.TrimSpace(argument.OldPassword)
+
+	cfg, err := s.cfg.Load()
+	if err != nil {
+		ctx.Error(gtype.ErrInternal, fmt.Errorf("load config fail: %s", err.Error()))
+		return
+	}
+	cfgUser := cfg.Site.Opt.GetUser(account)
+	if cfgUser == nil {
+		ctx.Error(gtype.ErrInternal, fmt.Sprintf("帐号(%s)不存在", account))
+		return
+	}
+	if cfgUser.Password != oldPassword {
+		ctx.Error(gtype.ErrInput, "原密码错误")
+		return
+	}
+	cfgUser.Password = strings.TrimSpace(argument.NewPassword)
+	err = s.cfg.Save(cfg)
+	if err != nil {
+		ctx.Error(gtype.ErrInternal, fmt.Errorf("save config fail: %s", err.Error()))
+		return
+	}
+
+	user.Password = cfgUser.Password
+	ctx.Success(nil)
+}
+
+func (s *User) ChangePasswordDoc(doc gtype.Doc, method string, uri gtype.Uri) {
+	catalog := s.createCatalog(doc, "用户管理")
+	function := catalog.AddFunction(method, uri, "修改本地用户密码")
+	function.SetNote("修改用户的登录密码")
+	function.SetInputJsonExample(&gtype.AccountPasswordChange{
 		Account: "zs",
 	})
 	function.SetOutputDataExample(nil)
