@@ -92,10 +92,13 @@ func (s *Service) UpdateCustomShell(ctx gtype.Context, ps gtype.Params) {
 	}(runningServices)
 
 	oldBinFilePath := filepath.Join(filepath.Dir(s.cfg.Module.Path), fileName)
-	err := os.Remove(oldBinFilePath)
-	if err != nil {
-		ctx.Error(gtype.ErrInternal, err)
-		return
+	_, err := os.Stat(oldBinFilePath)
+	if !os.IsNotExist(err) {
+		err = os.Remove(oldBinFilePath)
+		if err != nil {
+			ctx.Error(gtype.ErrInternal, err)
+			return
+		}
 	}
 
 	_, err = s.copyFile(newBinFilePath, oldBinFilePath)
