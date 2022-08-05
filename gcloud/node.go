@@ -33,7 +33,7 @@ func (s *Node) CopyToClient(t *gcfg.HttpsClient) {
 	t.Id = s.Id
 	t.Name = s.Name
 	t.Kind = s.Kind
-	t.Addr.Province = s.Addr.Address
+	t.Addr.Province = s.Addr.Province
 	t.Addr.Locality = s.Addr.Locality
 	t.Addr.Address = s.Addr.Address
 	t.RegTime = s.RegTime

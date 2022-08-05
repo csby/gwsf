@@ -17,7 +17,7 @@ func (s *Service) canRestart() bool {
 	return true
 }
 
-func (s *Service) restart(ctx gtype.Context) {
+func (s *Service) doRestart(ctx gtype.Context) {
 	err := s.svcMgr.RemoteRestart(s.cfg.Svc.Name)
 	if err != nil {
 		ctx.Error(gtype.ErrInternal, err)

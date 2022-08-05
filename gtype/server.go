@@ -27,6 +27,8 @@ type ServerInfo struct {
 }
 
 type ServerRole struct {
-	Cloud bool `json:"cloud" note:"是否云端"`
-	Node  bool `json:"node" note:"是否节点"`
+	Cloud   bool `json:"cloud" note:"是否云端"`
+	Node    bool `json:"node" note:"是否节点"`
+	Service bool `json:"service" note:"是否服务管理"`
+	Proxy   bool `json:"proxy" note:"是否反向代理"`
 }

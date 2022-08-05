@@ -24,8 +24,10 @@ func NewRole(log gtype.Log, cfg *gcfg.Config, isCloud, isNode bool) *Role {
 
 func (s *Role) GetServerRole(ctx gtype.Context, ps gtype.Params) {
 	ctx.Success(&gtype.ServerRole{
-		Cloud: s.isCloud,
-		Node:  s.isNode,
+		Cloud:   s.isCloud,
+		Node:    s.isNode,
+		Service: s.cfg.Sys.Svc.Enabled,
+		Proxy:   s.cfg.ReverseProxy.Enabled,
 	})
 }
 

@@ -36,6 +36,38 @@ const (
 	WSNetworkThroughput = 211 // 网络吞吐量
 	WSCpuUsage          = 212 // CPU使用率
 	WSMemUsage          = 213 // 内存使用率
+
+	WSReviseProxyServiceStatus  = 301 // 反向代理服务状态信息
+	WSReviseProxyConnectionOpen = 302 // 反向代理连接已打开
+	WSReviseProxyConnectionShut = 303 // 反向代理连接已关闭
+
+	WSReviseProxyServerAdd = 311 // 反向代理添加服务器
+	WSReviseProxyServerDel = 312 // 反向代理删除服务器
+	WSReviseProxyServerMod = 313 // 反向代理修改服务器
+
+	WSReviseProxyTargetAdd = 321 // 反向代理添加目标地址
+	WSReviseProxyTargetDel = 322 // 反向代理删除目标地址
+	WSReviseProxyTargetMod = 323 // 反向代理修改目标地址
+
+	WSReviseProxyTargetStatusChanged = 331 // 反向代理目标地址活动状态改变
+
+	WSSvcStatusChanged = 411 // 服务状态改变
+
+	WSCustomSvcAdded   = 421 // 添加自定义服务
+	WSCustomSvcUpdated = 422 // 更新自定义服务
+	WSCustomSvcDeleted = 423 // 删除自定义服务
+
+	WSTomcatAppAdded   = 431 // 添加tomcat应用
+	WSTomcatAppUpdated = 432 // 更新tomcat应用
+	WSTomcatAppDeleted = 433 // 删除tomcat应用
+
+	WSTomcatCfgAdded   = 441 // 添加tomcat配置
+	WSTomcatCfgUpdated = 442 // 更新tomcat配置
+	WSTomcatCfgDeleted = 443 // 删除tomcat配置
+
+	WSNginxAppAdded   = 451 // 添加nginx应用
+	WSNginxAppUpdated = 452 // 更新nginx应用
+	WSNginxAppDeleted = 453 // 删除nginx应用
 )
 
 type SocketMessage struct {

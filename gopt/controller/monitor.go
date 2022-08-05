@@ -2,9 +2,9 @@ package controller
 
 import (
 	"fmt"
-	"github.com/csby/gmonitor"
 	"github.com/csby/gwsf/gcfg"
 	"github.com/csby/gwsf/gtype"
+	"time"
 )
 
 const (
@@ -14,71 +14,41 @@ const (
 	monitorCatalogNetwork = "网络"
 	monitorCatalogCpu     = "处理器"
 	monitorCatalogMemory  = "内存"
+	monitorCatalogProcess = "进程"
 )
 
 type Monitor struct {
 	controller
+
+	faces    *NetworkInterfaceCollection
+	cpuUsage *NetworkCpuUsage
+	cupName  string
+	memUsage *NetworkMemoryUsage
 }
 
-func NewMonitor(log gtype.Log, cfg *gcfg.Config) *Monitor {
-	instance := &Monitor{}
-	instance.SetLog(log)
-	instance.cfg = cfg
+func NewMonitor(log gtype.Log, cfg *gcfg.Config, wsc gtype.SocketChannelCollection) *Monitor {
+	inst := &Monitor{}
+	inst.SetLog(log)
+	inst.cfg = cfg
+	inst.wsChannels = wsc
 
-	return instance
-}
-
-func (s *Monitor) GetNetworkInterfaces(ctx gtype.Context, ps gtype.Params) {
-	data, err := gmonitor.Interfaces()
-	if err != nil {
-		ctx.Error(gtype.ErrInternal, err)
-		return
+	maxCount := 30
+	inst.faces = &NetworkInterfaceCollection{
+		MaxCounter: maxCount,
 	}
-	ctx.Success(data)
-}
+	inst.cpuUsage = &NetworkCpuUsage{
+		Count: maxCount,
+	}
+	inst.memUsage = &NetworkMemoryUsage{
+		Count: maxCount,
+	}
 
-func (s *Monitor) GetNetworkInterfacesDoc(doc gtype.Doc, method string, uri gtype.Uri) {
-	catalog := s.createCatalog(doc, "系统信息")
-	function := catalog.AddFunction(method, uri, "获取网卡信息")
-	function.SetNote("获取主机网卡相关信息")
-	function.SetOutputDataExample([]gmonitor.Interface{
-		{
-			Name:       "本地连接",
-			MTU:        1500,
-			MacAddress: "00:16:5d:13:b9:70",
-			IPAddress: []string{
-				"fe80::b1d0:ff08:1f6f:3e0b/64",
-				"192.168.1.1/24",
-			},
-			Flags: []string{
-				"up",
-				"broadcast",
-				"multicast",
-			},
-		},
-	})
-	function.AddOutputError(gtype.ErrInternal)
-	function.AddOutputError(gtype.ErrTokenInvalid)
-}
+	interval := time.Second
+	go inst.doStatNetworkIO(interval)
+	go inst.doStatCpuUsage(interval)
+	go inst.doStatMemoryUsage(10 * interval)
 
-func (s *Monitor) GetNetworkListenPorts(ctx gtype.Context, ps gtype.Params) {
-	data := gmonitor.ListenPorts()
-	ctx.Success(data)
-}
-
-func (s *Monitor) GetNetworkListenPortsDoc(doc gtype.Doc, method string, uri gtype.Uri) {
-	catalog := s.createCatalog(doc, "系统信息")
-	function := catalog.AddFunction(method, uri, "获取监听端口")
-	function.SetNote("获取主机正在监听端口信息")
-	function.SetOutputDataExample([]gmonitor.Listen{
-		{
-			Address:  "",
-			Port:     22,
-			Protocol: "tcp",
-		},
-	})
-	function.AddOutputError(gtype.ErrInternal)
-	function.AddOutputError(gtype.ErrTokenInvalid)
+	return inst
 }
 
 func (s *Monitor) toSpeedText(v float64) string {

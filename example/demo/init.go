@@ -126,6 +126,14 @@ func init() {
 		cfg.Site.Opt.Path = filepath.Join(rootFolder, "site", "opt")
 	}
 
+	// init path of system service
+	if cfg.Sys.Svc.Custom.App == "" {
+		cfg.Sys.Svc.Custom.App = filepath.Join(rootFolder, "svc", "custom")
+	}
+	if cfg.Sys.Svc.Custom.Log == "" {
+		cfg.Sys.Svc.Custom.Log = filepath.Join(rootFolder, "log", "svc", "custom")
+	}
+
 	// init service
 	if strings.TrimSpace(cfg.Svc.Name) == "" {
 		cfg.Svc.Name = moduleName

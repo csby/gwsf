@@ -74,6 +74,10 @@ func (s *controller) writeWebSocketMessage(token string, id int, data interface{
 	return true
 }
 
+func (s *controller) writeOptMessage(id int, data interface{}) bool {
+	return s.writeWebSocketMessage("", id, data)
+}
+
 func (s *controller) sizeToText(v float64) string {
 	kb := float64(1024)
 	mb := 1024 * kb

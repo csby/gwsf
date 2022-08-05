@@ -13,7 +13,9 @@ type Config struct {
 	Cloud   Https   `json:"cloud" note:"云服务"`
 	Proxy   string  `json:"proxy" note:"代理服务器IP地址（客户端不是来自代理服务器时，远程地址为当前连接地址）"`
 
-	Site Site `json:"site" note:"站点配置"`
+	Site         Site   `json:"site" note:"站点配置"`
+	ReverseProxy Proxy  `json:"reverseProxy" note:"反向代理配置"`
+	Sys          System `json:"sys" note:"系统管理"`
 
 	Load func() (*Config, error) `json:"-"`
 	Save func(cfg *Config) error `json:"-"`
@@ -21,4 +23,5 @@ type Config struct {
 
 func (s *Config) InitId() {
 	s.Node.InitId()
+	s.ReverseProxy.initId()
 }

@@ -23,7 +23,7 @@ func (s *Service) canRestart() bool {
 	}
 }
 
-func (s *Service) restart(ctx gtype.Context) {
+func (s *Service) doRestart(ctx gtype.Context) {
 	go func() {
 		time.Sleep(2 * time.Second)
 		err := s.cfg.Svc.Restart()
