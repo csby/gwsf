@@ -20,4 +20,5 @@ func (s *Controller) HelloDoc(doc gtype.Doc, method string, uri gtype.Uri) {
 	function := catalog.AddFunction(method, uri, "Hello World")
 	function.SetNote("restful api, return data with 'Hello'")
 	function.SetOutputDataExample("Hello")
+	function.AddOutputError(gtype.ErrInput)
 }

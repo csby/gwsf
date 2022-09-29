@@ -1,6 +1,9 @@
 package gtype
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 var (
 	ErrSuccess    = newError(0, "")
@@ -93,8 +96,22 @@ func (s *innerError) SetDetail(v ...interface{}) Error {
 	err := &innerError{
 		code:    s.code,
 		summary: s.summary,
-		detail:  fmt.Sprint(v...),
+		detail:  s.toString(v),
 	}
 
 	return err
+}
+
+func (s *innerError) toString(a []interface{}) string {
+	sb := &strings.Builder{}
+	c := len(a)
+	for i := 0; i < c; i++ {
+		item := a[i]
+		if item == nil {
+			continue
+		}
+		sb.WriteString(fmt.Sprint(item))
+	}
+
+	return sb.String()
 }

@@ -10,7 +10,7 @@ import (
 type Handler interface {
 	Init(router gtype.Router,
 		setup func(opt gtype.Option),
-		api func(path *gtype.Path, preHandle gtype.HttpHandle, wsc gtype.SocketChannelCollection, tdb gtype.TokenDatabase))
+		api func(path *gtype.Path, preHandle gtype.HttpHandle, opt gtype.Opt))
 }
 
 func NewHandler(log gtype.Log, cfg *gcfg.Config, webPrefix, apiPrefix, docWebPrefix string) Handler {
@@ -62,7 +62,7 @@ type innerHandler struct {
 
 func (s *innerHandler) Init(router gtype.Router,
 	setup func(opt gtype.Option),
-	api func(path *gtype.Path, preHandle gtype.HttpHandle, wsc gtype.SocketChannelCollection, tdb gtype.TokenDatabase)) {
+	api func(path *gtype.Path, preHandle gtype.HttpHandle, opt gtype.Opt)) {
 	if setup != nil {
 		setup(s)
 	}
@@ -76,7 +76,7 @@ func (s *innerHandler) Init(router gtype.Router,
 	}
 
 	if api != nil {
-		api(s.apiPath, tokenChecker, s.wsc, s.dbToken)
+		api(s.apiPath, tokenChecker, s.websocket)
 	}
 }
 

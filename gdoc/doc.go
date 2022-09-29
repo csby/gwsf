@@ -5,23 +5,68 @@ import (
 	"fmt"
 	"github.com/csby/gwsf/gtype"
 	"hash/adler32"
+	"runtime"
 	"strings"
 )
 
 func NewDoc(enable bool) gtype.Doc {
 	return &doc{
-		enable:    enable,
-		catalogs:  make(CatalogCollection, 0),
-		functions: make(map[string]*Function),
+		enable:      enable,
+		catalogs:    make(CatalogCollection, 0),
+		functions:   make(map[string]*Function),
+		regenerates: make([]*redo, 0),
 	}
 }
 
 type doc struct {
-	enable    bool
-	catalogs  CatalogCollection
-	functions map[string]*Function
+	enable      bool
+	catalogs    CatalogCollection
+	functions   map[string]*Function
+	regenerates []*redo
 
 	onFunctionReady func(index int, method, path, name string)
+}
+
+func (s *doc) Log(handle gtype.DocHandle, method string, uri gtype.Uri) {
+	if handle == nil {
+		return
+	}
+
+	s.regenerates = append(s.regenerates, &redo{
+		handle: handle,
+		method: method,
+		uri:    uri,
+	})
+}
+
+func (s *doc) Regenerate() {
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println("error; doc regenerate fail: ", err)
+		}
+	}()
+
+	if !s.Enable() {
+		return
+	}
+
+	defer runtime.GC()
+
+	items := s.regenerates
+	s.catalogs = make(CatalogCollection, 0)
+	s.functions = make(map[string]*Function)
+
+	c := len(items)
+	for i := 0; i < c; i++ {
+		item := items[i]
+		if item == nil {
+			continue
+		}
+		if item.handle == nil {
+			continue
+		}
+		item.handle(s, item.method, item.uri)
+	}
 }
 
 func (s *doc) Enable() bool {

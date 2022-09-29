@@ -215,7 +215,7 @@ func (s *context) Error(err gtype.Error, detail ...interface{}) {
 		Serial: s.rid,
 	}
 	result.Error.Summary = err.Summary()
-	details := fmt.Sprint(detail...)
+	details := s.toString(detail)
 	if len(details) > 0 {
 		result.Error.Detail = details
 	} else {
@@ -235,7 +235,7 @@ func (s *context) ErrorWithData(data interface{}, err gtype.Error, detail ...int
 		Data:   data,
 	}
 	result.Error.Summary = err.Summary()
-	details := fmt.Sprint(detail...)
+	details := s.toString(detail)
 	if len(details) > 0 {
 		result.Error.Detail = details
 	} else {
@@ -391,4 +391,18 @@ func (s *context) SetClientOrganization(ou string) {
 
 func (s *context) NewGuid() string {
 	return gtype.NewGuid()
+}
+
+func (s *context) toString(a []interface{}) string {
+	sb := &strings.Builder{}
+	c := len(a)
+	for i := 0; i < c; i++ {
+		item := a[i]
+		if item == nil {
+			continue
+		}
+		sb.WriteString(fmt.Sprint(item))
+	}
+
+	return sb.String()
 }

@@ -68,13 +68,15 @@ func (s *Catalog) AddFunction(method string, uri gtype.Uri, name string) gtype.F
 		fuc.Method = "WEBSOCKET"
 	}
 	fuc.Input = &Input{
-		Headers: make([]*Header, 0),
-		Queries: make([]*Query, 0),
-		Forms:   make([]*Form, 0),
+		Headers:  make([]*Header, 0),
+		Queries:  make([]*Query, 0),
+		Forms:    make([]*Form, 0),
+		Appendix: &Appendix{},
 	}
 	fuc.Output = &Output{
-		Headers: make([]*Header, 0),
-		Errors:  make(ErrorCollection, 0),
+		Headers:  make([]*Header, 0),
+		Errors:   make(ErrorCollection, 0),
+		Appendix: &Appendix{},
 	}
 
 	if fuc.TokenUI != nil && fuc.TokenCreate != nil {

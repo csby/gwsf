@@ -40,3 +40,11 @@ func (s *Result) FormatString() string {
 
 	return string(bytes[:])
 }
+
+type DatabaseResult struct {
+	Elapse       int64       `json:"elapse" note:"耗时(毫秒)"`
+	ElapseText   string      `json:"elapseText" note:"耗时信息"`
+	RowsAffected int64       `json:"rowsAffected" note:"受影响行数"`
+	LastInsertId int64       `json:"lastInsertId" note:"自增长字段值，仅对插入(INSERT)操作有效"`
+	Records      interface{} `json:"records" note:"记录，仅对查询(SELECT)操作有效"`
+}

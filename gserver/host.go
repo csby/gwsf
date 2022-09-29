@@ -169,6 +169,8 @@ func (s *host) runHttps(handler *handler) error {
 	}
 	if s.cfg.Https.RequestClientCert {
 		s.httpsServer.TLSConfig.ClientAuth = tls.RequireAndVerifyClientCert
+	} else if s.cfg.Https.AcceptClientCert {
+		s.httpsServer.TLSConfig.ClientAuth = tls.VerifyClientCertIfGiven
 	}
 	if len(caFilePath) > 0 {
 		crt := &gcrt.Crt{}
@@ -222,6 +224,8 @@ func (s *host) runCloud(handler *handler) error {
 	}
 	if s.cfg.Cloud.RequestClientCert {
 		s.cloudServer.TLSConfig.ClientAuth = tls.RequireAndVerifyClientCert
+	} else if s.cfg.Cloud.AcceptClientCert {
+		s.httpsServer.TLSConfig.ClientAuth = tls.VerifyClientCertIfGiven
 	}
 	if len(caFilePath) > 0 {
 		crt := &gcrt.Crt{}

@@ -86,6 +86,7 @@ func TokenUIForAccountPassword() []TokenUI {
 type Token struct {
 	ID          string    `json:"id" note:"标识ID"`
 	UserID      string    `json:"userId" note:"用户ID"`
+	UserNo      int64     `json:"userNo" note:"用户编号"`
 	UserAccount string    `json:"userAccount" note:"用户账号"`
 	UserName    string    `json:"userName" note:"用户姓名"`
 	DisplayName string    `json:"displayName" note:"显示"`
@@ -95,8 +96,25 @@ type Token struct {
 	Usage       int       `json:"usage" note:"使用次数"`
 	Kinds       []int8    `json:"kinds" note:"用户类型"`
 	Version     string    `json:"version" note:"版本号"`
+	Position    string    `json:"position" note:"位置"`
+	Type        string    `json:"type" note:"类型"`
+	Dept        string    `json:"dept" note:"部门"`
+	Area        string    `json:"area" note:"区域"`
+	Role        string    `json:"role" note:"角色"`
 
 	Ext interface{} `json:"ext" note:"扩展信息"`
+}
+
+func (s *Token) Ignored(token *Token) bool {
+	if token == nil {
+		return true
+	}
+
+	if s.ID == token.ID {
+		return false
+	} else {
+		return true
+	}
 }
 
 type TokenFilter struct {
@@ -111,11 +129,19 @@ type TokenCode struct {
 
 type OnlineUser struct {
 	Token         string   `json:"token" note:"凭证"`
+	UserID        string   `json:"userId" note:"用户ID"`
 	UserAccount   string   `json:"userAccount" note:"用户账号"`
 	UserName      string   `json:"userName" note:"用户姓名"`
 	LoginIP       string   `json:"loginIp" note:"用户登陆IP"`
 	LoginTime     DateTime `json:"loginTime" note:"登陆时间"`
-	LoginDuration string   `json:"loginDuration" note:"登陆时时长"`
+	ActiveTime    DateTime `json:"activeTime" note:"最近激活时间"`
+	LoginDuration string   `json:"loginDuration" note:"登陆时长"`
+	Position      string   `json:"position" note:"位置"`
+	Version       string   `json:"version" note:"版本号"`
+	Type          string   `json:"type" note:"类型"`
+	Dept          string   `json:"dept" note:"部门"`
+	Area          string   `json:"area" note:"区域"`
+	Role          string   `json:"role" note:"角色"`
 }
 
 func (s *OnlineUser) CopyFrom(token *Token) {
@@ -124,10 +150,18 @@ func (s *OnlineUser) CopyFrom(token *Token) {
 	}
 
 	s.Token = token.ID
+	s.UserID = token.UserID
 	s.UserAccount = token.UserAccount
 	s.UserName = token.UserName
 	s.LoginIP = token.LoginIP
 	s.LoginTime = DateTime(token.LoginTime)
+	s.ActiveTime = DateTime(token.ActiveTime)
+	s.Position = token.Position
+	s.Version = token.Version
+	s.Type = token.Type
+	s.Dept = token.Dept
+	s.Area = token.Area
+	s.Role = token.Role
 }
 
 func NewTokenDatabase(expMinutes int64, name string) TokenDatabase {

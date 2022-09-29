@@ -99,6 +99,17 @@ func (t *DateTime) ToDate(plusDays int) *time.Time {
 	return &date
 }
 
+func (t *DateTime) ToTime(location *time.Location) *time.Time {
+	v := time.Time(*t)
+	l := location
+	if l == nil {
+		l = v.Location()
+	}
+	v = time.Date(v.Year(), v.Month(), v.Day(), v.Hour(), v.Minute(), v.Second(), v.Nanosecond(), l)
+
+	return &v
+}
+
 func (t *DateTime) GetDays(now time.Time) int64 {
 	start := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 

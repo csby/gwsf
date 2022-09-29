@@ -10,12 +10,6 @@ import (
 	"time"
 )
 
-type Websocket struct {
-	controller
-
-	wsGrader websocket.Upgrader
-}
-
 func NewWebsocket(log gtype.Log, cfg *gcfg.Config, db gtype.TokenDatabase, chs gtype.SocketChannelCollection) *Websocket {
 	instance := &Websocket{}
 	instance.SetLog(log)
@@ -23,6 +17,8 @@ func NewWebsocket(log gtype.Log, cfg *gcfg.Config, db gtype.TokenDatabase, chs g
 	instance.dbToken = db
 	instance.wsChannels = chs
 	instance.wsGrader = websocket.Upgrader{CheckOrigin: instance.checkOrigin}
+	instance.input = &appendix{}
+	instance.output = &appendix{}
 
 	if chs != nil {
 		chs.SetListener(nil, instance.onChannelRemoved)
@@ -30,6 +26,14 @@ func NewWebsocket(log gtype.Log, cfg *gcfg.Config, db gtype.TokenDatabase, chs g
 	}
 
 	return instance
+}
+
+type Websocket struct {
+	controller
+
+	wsGrader websocket.Upgrader
+	input    *appendix
+	output   *appendix
 }
 
 func (s *Websocket) Notify(ctx gtype.Context, ps gtype.Params) {
@@ -133,9 +137,25 @@ func (s *Websocket) NotifyDoc(doc gtype.Doc, method string, uri gtype.Uri) {
 	function := catalog.AddFunction(method, uri, "通知推送")
 	function.SetNote("订阅并接收系统推送的通知，该接口保持阻塞至连接关闭")
 	function.SetInputExample(&gtype.SocketMessage{ID: 1})
+	function.SetInputFormat(gtype.ArgsFmtJson)
 	function.SetOutputExample(&gtype.SocketMessage{ID: 1})
+	function.SetOutputFormat(gtype.ArgsFmtJson)
 	function.AddOutputError(gtype.ErrInternal)
 	function.AddOutputError(gtype.ErrTokenInvalid)
+
+	input := function.SetInputAppendix("消息标识")
+	s.input.impl = input
+	output := function.SetOutputAppendix("消息标识")
+	s.output.impl = output
+
+	item := &appendixItem{}
+	output.AddItem(item.Set(gtype.WSOptUserLogin, &gtype.OnlineUser{LoginTime: gtype.DateTime(time.Now())}))
+	output.AddItem(item.Set(gtype.WSOptUserLogout, gtype.NewGuid()))
+	output.AddItem(item.Set(gtype.WSOptUserOnline, nil))
+	output.AddItem(item.Set(gtype.WSOptUserOffline, nil))
+	output.AddItem(item.Set(gtype.WSSiteUpload, &gtype.WebApp{}))
+	output.AddItem(item.Set(gtype.WSRootSiteUploadFile, &gtype.SiteFile{UploadTime: gtype.DateTime(time.Now())}))
+	output.AddItem(item.Set(gtype.WSRootSiteDeleteFile, &gtype.SiteFileFilter{}))
 }
 
 func (s *Websocket) checkOrigin(r *http.Request) bool {
@@ -164,6 +184,10 @@ func (s *Websocket) onChannelRemoved(channel gtype.SocketChannel) {
 }
 
 func (s *Websocket) onChannelRead(message *gtype.SocketMessage, channel gtype.SocketChannel) {
+	if message == nil || channel == nil {
+		return
+	}
+
 	channel.Container().Write(&gtype.SocketMessage{
 		ID:   message.ID,
 		Data: message.Data,

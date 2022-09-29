@@ -128,6 +128,37 @@ func (s *Function) SetInputJsonExample(v interface{}) {
 	s.AddInputHeader(true, "content-type", "内容类型", gtype.ContentTypeJson, gtype.ContentTypeJson)
 }
 
+func (s *Function) SetCustomInputJsonExample(v interface{}) {
+	if v == nil {
+		return
+	}
+	fields, ok := v.([]*Model)
+	if !ok {
+		return
+	}
+	c := len(fields)
+	if c < 1 {
+		return
+	}
+
+	data := &MapData{}
+	for i := 0; i < c; i++ {
+		field := fields[i]
+		if field == nil {
+			continue
+		}
+		data.SetValue(field.Name, field.Value)
+	}
+
+	s.Input.Example = data
+	s.SetInputFormat(gtype.ArgsFmtJson)
+	s.Input.Model = make([]*Type, 0)
+	s.Input.Model = append(s.Input.Model, &Type{
+		Fields: fields,
+	})
+	s.AddInputHeader(true, "content-type", "内容类型", gtype.ContentTypeJson, gtype.ContentTypeJson)
+}
+
 func (s *Function) SetInputXmlExample(v interface{}) {
 	s.SetInputFormat(gtype.ArgsFmtXml)
 	example, err := xml.MarshalIndent(v, "", "	")
@@ -135,6 +166,15 @@ func (s *Function) SetInputXmlExample(v interface{}) {
 		s.Input.Example = string(example)
 	}
 	s.AddInputHeader(true, "content-type", "内容类型", gtype.ContentTypeXml, gtype.ContentTypeXml)
+}
+
+func (s *Function) SetInputAppendix(label string) gtype.Appendix {
+	if s.Input.Appendix == nil {
+		s.Input.Appendix = &Appendix{}
+	}
+
+	s.Input.Appendix.Label = label
+	return s.Input.Appendix
 }
 
 func (s *Function) AddOutputHeader(name, value string) {
@@ -184,12 +224,119 @@ func (s *Function) SetOutputDataExample(v interface{}) {
 		Serial: 201805161315480008,
 		Data:   v,
 	}
-	argument := modelArgument.FromExample(s.Output.Example)
-	if argument != nil {
-		s.Output.Model = argument.ToModel()
+	args := modelArgument.FromExample(s.Output.Example)
+	if args != nil {
+		s.Output.Model = args.ToModel()
 	} else {
 		s.Output.Model = make([]*Type, 0)
 	}
+	s.SetOutputFormat(gtype.ArgsFmtJson)
+	s.AddOutputError(gtype.ErrException)
+	s.AddOutputHeader("content-type", "application/json;charset=utf-8")
+}
+
+func (s *Function) SetCustomOutputDataExample(v interface{}) {
+	if v == nil {
+		s.SetOutputDataExample(v)
+		return
+	}
+	fields, ok := v.([]*Model)
+	if !ok {
+		s.SetOutputDataExample(v)
+		return
+	}
+	c := len(fields)
+	if c < 1 {
+		s.SetOutputDataExample(v)
+		return
+	}
+
+	data := &MapData{}
+	for i := 0; i < c; i++ {
+		field := fields[i]
+		if field == nil {
+			continue
+		}
+		data.SetValue(field.Name, field.Value)
+	}
+
+	result := &gtype.Result{
+		Code:   0,
+		Serial: 201805161315480008,
+		Data:   nil,
+	}
+	args := modelArgument.FromExample(result)
+	if args != nil {
+		s.Output.Model = args.ToModel()
+	} else {
+		s.Output.Model = make([]*Type, 0)
+	}
+	model := s.Output.GetModel("data")
+	if model != nil {
+		model.Type = "Data"
+		s.Output.Model = append(s.Output.Model, &Type{
+			Name:   "Data",
+			Fields: fields,
+		})
+	}
+
+	result.Data = data
+	s.Output.Example = result
+	s.SetOutputFormat(gtype.ArgsFmtJson)
+	s.AddOutputError(gtype.ErrException)
+	s.AddOutputHeader("content-type", "application/json;charset=utf-8")
+}
+
+func (s *Function) SetCustomOutputDatabaseExample(v interface{}) {
+	resultData := &gtype.DatabaseResult{
+		Records: nil,
+	}
+	if v == nil {
+		s.SetOutputDataExample(resultData)
+		return
+	}
+	fields, ok := v.([]*Model)
+	if !ok {
+		s.SetOutputDataExample(resultData)
+		return
+	}
+	c := len(fields)
+	if c < 1 {
+		s.SetOutputDataExample(resultData)
+		return
+	}
+
+	data := &MapData{}
+	for i := 0; i < c; i++ {
+		field := fields[i]
+		if field == nil {
+			continue
+		}
+		data.SetValue(field.Name, field.Value)
+	}
+
+	result := &gtype.Result{
+		Code:   0,
+		Serial: 201805161315480008,
+		Data:   resultData,
+	}
+	args := modelArgument.FromExample(result)
+	if args != nil {
+		s.Output.Model = args.ToModel()
+	} else {
+		s.Output.Model = make([]*Type, 0)
+	}
+	model := s.Output.GetModel("records")
+	if model != nil {
+		model.Type = "[]Records"
+		s.Output.Model = append(s.Output.Model, &Type{
+			Name:   "Record",
+			Fields: fields,
+		})
+	}
+
+	resultData.Records = []*MapData{data}
+	s.Output.Example = result
 	s.SetOutputFormat(gtype.ArgsFmtJson)
 	s.AddOutputError(gtype.ErrException)
 	s.AddOutputHeader("content-type", "application/json;charset=utf-8")
@@ -206,6 +353,15 @@ func (s *Function) SetOutputXmlExample(v interface{}) {
 
 func (s *Function) GetInputHeader(name string) *Header {
 	return s.Input.GetHeader(name)
+}
+
+func (s *Function) SetOutputAppendix(label string) gtype.Appendix {
+	if s.Output.Appendix == nil {
+		s.Output.Appendix = &Appendix{}
+	}
+
+	s.Output.Appendix.Label = label
+	return s.Output.Appendix
 }
 
 func (s *Function) GetInputQuery(name string) *Query {

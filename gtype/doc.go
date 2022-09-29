@@ -13,6 +13,18 @@ const (
 	FormValueKindFile = 1
 )
 
+type Appendix interface {
+	Add(value interface{}, name, note string, example interface{})
+	AddItem(item AppendixItem)
+}
+
+type AppendixItem interface {
+	Value() interface{}
+	Name() string
+	Note() string
+	Example() interface{}
+}
+
 type Function interface {
 	SetNote(v string)
 	SetRemark(v string)
@@ -26,14 +38,19 @@ type Function interface {
 	SetInputExample(v interface{})
 	SetInputJsonExample(v interface{})
 	SetInputXmlExample(v interface{})
+	SetCustomInputJsonExample(v interface{})
+	SetInputAppendix(label string) Appendix
 	AddOutputHeader(name, value string)
 	ClearOutputHeader()
 	SetOutputFormat(v int)
 	SetOutputExample(v interface{})
 	SetOutputDataExample(v interface{})
+	SetCustomOutputDataExample(v interface{})
+	SetCustomOutputDatabaseExample(v interface{})
 	SetOutputXmlExample(v interface{})
 	AddOutputError(err Error)
 	AddOutputErrorCustom(code int, summary string)
+	SetOutputAppendix(label string) Appendix
 }
 
 type Catalog interface {
@@ -49,4 +66,6 @@ type Doc interface {
 	OnFunctionReady(f func(index int, method, path, name string))
 	TokenUI(id string) (interface{}, error)
 	TokenCreate(id string, items []TokenAuth, ctx Context) (string, Error)
+	Log(handle DocHandle, method string, uri Uri)
+	Regenerate()
 }

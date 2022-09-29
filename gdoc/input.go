@@ -3,12 +3,13 @@ package gdoc
 import "strings"
 
 type Input struct {
-	Headers []*Header   `json:"headers"` // 头部
-	Queries []*Query    `json:"queries"` // 参数
-	Forms   []*Form     `json:"forms"`   // 表单
-	Model   []*Type     `json:"model"`   // 数据模型
-	Example interface{} `json:"example"` // 数据示例
-	Format  int         `json:"format"`  // 数据格式: 0-text; 1-json; 2-xml
+	Headers  []*Header   `json:"headers"`  // 头部
+	Queries  []*Query    `json:"queries"`  // 参数
+	Forms    []*Form     `json:"forms"`    // 表单
+	Model    []*Type     `json:"model"`    // 数据模型
+	Example  interface{} `json:"example"`  // 数据示例
+	Format   int         `json:"format"`   // 数据格式: 0-text; 1-json; 2-xml
+	Appendix *Appendix   `json:"appendix"` // 附录
 }
 
 func (s *Input) GetHeader(name string) *Header {

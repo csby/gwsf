@@ -49,9 +49,9 @@ func newHandler(log gtype.Log, cfg *gcfg.Config, hdl gtype.Handler) (*handler, e
 				hdl.ExtendOptSetup(opt)
 			}
 		},
-		func(path *gtype.Path, preHandle gtype.HttpHandle, wsc gtype.SocketChannelCollection, tdb gtype.TokenDatabase) {
+		func(path *gtype.Path, preHandle gtype.HttpHandle, opt gtype.Opt) {
 			if hdl != nil {
-				hdl.ExtendOptApi(instance.router, path, preHandle, wsc, tdb)
+				hdl.ExtendOptApi(instance.router, path, preHandle, opt)
 			}
 		})
 

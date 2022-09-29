@@ -72,7 +72,7 @@ const (
 
 type SocketMessage struct {
 	ID   int         `json:"id" note:"消息标识"`
-	Data interface{} `json:"data" note:"消息内容, 结构随id而定"`
+	Data interface{} `json:"data" note:"消息内容, 结构随id而定(详见附录appendix)"`
 }
 
 func (s *SocketMessage) GetData(v interface{}) error {
@@ -82,6 +82,10 @@ func (s *SocketMessage) GetData(v interface{}) error {
 	}
 
 	return json.Unmarshal(data, v)
+}
+
+type SocketFilter interface {
+	Ignored(token *Token) bool
 }
 
 type SocketChannel interface {
@@ -129,13 +133,16 @@ func (s *innerSocketChannel) close() {
 }
 
 type SocketChannelCollection interface {
+	OnlineUsersByUserId(userId string) []*OnlineUser
 	OnlineUsers() []*OnlineUser
 	OnlineNodes() []*Node
 	OnlineNode(id NodeId) *Node
 	SetListener(newChannel, removeChannel func(channel SocketChannel))
+	SetBeforeWrite(beforeWrite func(message *SocketMessage, channel SocketChannel))
 	NewChannel(token *Token) SocketChannel
 	Remove(channel SocketChannel)
 	Write(message *SocketMessage, token *Token)
+	WriteMsg(message *SocketMessage, filter SocketFilter) int
 	WriteMessage(message *SocketMessage, tokenId string) bool
 	AddReader(reader func(message *SocketMessage, channel SocketChannel))
 	Read(message *SocketMessage, channel SocketChannel)
@@ -159,6 +166,36 @@ type innerSocketChannelCollection struct {
 	filters        []func(message *SocketMessage, channel SocketChannel, token *Token) bool
 	newListener    func(channel SocketChannel)
 	removeListener func(channel SocketChannel)
+	beforeWrite    func(message *SocketMessage, channel SocketChannel)
+}
+
+func (s *innerSocketChannelCollection) OnlineUsersByUserId(userId string) []*OnlineUser {
+	s.Lock()
+	defer s.Unlock()
+
+	users := make([]*OnlineUser, 0)
+
+	for e := s.channels.Front(); e != nil; {
+		ev, ok := e.Value.(SocketChannel)
+		if !ok {
+			break
+		}
+
+		token := ev.Token()
+		if token != nil {
+			if token.UserID == userId {
+				user := &OnlineUser{}
+				user.CopyFrom(token)
+				user.LoginDuration = user.LoginTime.Duration()
+
+				users = append(users, user)
+			}
+		}
+
+		e = e.Next()
+	}
+
+	return users
 }
 
 func (s *innerSocketChannelCollection) OnlineUsers() []*OnlineUser {
@@ -176,7 +213,7 @@ func (s *innerSocketChannelCollection) OnlineUsers() []*OnlineUser {
 
 		token := ev.Token()
 		if token != nil {
-			_, ok := tokens[token.ID]
+			_, ok = tokens[token.ID]
 			if !ok {
 				tokens[token.ID] = 0
 				user := &OnlineUser{}
@@ -259,6 +296,10 @@ func (s *innerSocketChannelCollection) SetListener(newChannel, removeChannel fun
 	s.removeListener = removeChannel
 }
 
+func (s *innerSocketChannelCollection) SetBeforeWrite(beforeWrite func(message *SocketMessage, channel SocketChannel)) {
+	s.beforeWrite = beforeWrite
+}
+
 func (s *innerSocketChannelCollection) NewChannel(token *Token) SocketChannel {
 	s.Lock()
 	defer s.Unlock()
@@ -310,6 +351,9 @@ func (s *innerSocketChannelCollection) Write(message *SocketMessage, token *Toke
 		}
 
 		if !s.filter(message, ev, token) {
+			if s.beforeWrite != nil {
+				s.beforeWrite(message, ev)
+			}
 			ev.Write(message)
 		}
 
@@ -330,6 +374,9 @@ func (s *innerSocketChannelCollection) WriteMessage(message *SocketMessage, toke
 		t := ev.Token()
 		if t != nil {
 			if t.ID == tokenId {
+				if s.beforeWrite != nil {
+					s.beforeWrite(message, ev)
+				}
 				ev.Write(message)
 				return true
 			}
@@ -339,6 +386,37 @@ func (s *innerSocketChannelCollection) WriteMessage(message *SocketMessage, toke
 	}
 
 	return false
+}
+
+func (s *innerSocketChannelCollection) WriteMsg(message *SocketMessage, filter SocketFilter) int {
+	s.Lock()
+	defer s.Unlock()
+
+	count := 0
+	for e := s.channels.Front(); e != nil; {
+		ev, ok := e.Value.(SocketChannel)
+		if ok {
+			if filter == nil {
+				if s.beforeWrite != nil {
+					s.beforeWrite(message, ev)
+				}
+				ev.Write(message)
+				count++
+			} else {
+				if !filter.Ignored(ev.Token()) {
+					if s.beforeWrite != nil {
+						s.beforeWrite(message, ev)
+					}
+					ev.Write(message)
+					count++
+				}
+			}
+		}
+
+		e = e.Next()
+	}
+
+	return count
 }
 
 func (s *innerSocketChannelCollection) AddReader(reader func(message *SocketMessage, channel SocketChannel)) {

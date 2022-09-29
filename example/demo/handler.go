@@ -59,8 +59,11 @@ func (s *Handler) ExtendOptSetup(opt gtype.Option) {
 func (s *Handler) ExtendOptApi(router gtype.Router,
 	path *gtype.Path,
 	preHandle gtype.HttpHandle,
-	wsc gtype.SocketChannelCollection,
-	tdb gtype.TokenDatabase) {
+	opt gtype.Opt) {
+	var wsc gtype.SocketChannelCollection = nil
+	if opt != nil {
+		wsc = opt.Wsc()
+	}
 	s.optSocketChannels = wsc
 
 	s.cloudHandler = gcloud.NewHandler(s.GetLog(), &cfg.Config, wsc)

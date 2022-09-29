@@ -204,6 +204,7 @@ func (s *Router) Handle(method string, uri gtype.Uri, before, handle gtype.HttpH
 		if s.Doc != nil {
 			if s.Doc.Enable() {
 				docHandle(s.Doc, method, uri)
+				s.Doc.Log(docHandle, method, uri)
 			}
 		}
 	}

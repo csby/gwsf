@@ -7,11 +7,34 @@ import (
 )
 
 type Output struct {
-	Headers []*Header       `json:"headers"` // 头部
-	Model   []*Type         `json:"model"`   // 数据模型
-	Example interface{}     `json:"example"` // 数据示例
-	Format  int             `json:"format"`  // 数据格式: 0-text; 1-json; 2-xml
-	Errors  ErrorCollection `json:"errors"`  // 输出错误代码
+	Headers  []*Header       `json:"headers"`  // 头部
+	Model    []*Type         `json:"model"`    // 数据模型
+	Example  interface{}     `json:"example"`  // 数据示例
+	Format   int             `json:"format"`   // 数据格式: 0-text; 1-json; 2-xml
+	Errors   ErrorCollection `json:"errors"`   // 输出错误代码
+	Appendix *Appendix       `json:"appendix"` // 附录
+}
+
+func (s *Output) GetModel(name string) *Model {
+	tc := len(s.Model)
+	for ti := 0; ti < tc; ti++ {
+		t := s.Model[ti]
+		if t == nil {
+			continue
+		}
+
+		mc := len(t.Fields)
+		for mi := 0; mi < mc; mi++ {
+			m := t.Fields[mi]
+			if m == nil {
+				continue
+			}
+			if m.Name == name {
+				return m
+			}
+		}
+	}
+	return nil
 }
 
 func (s *Output) GetHeader(name string) *Header {
