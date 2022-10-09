@@ -61,16 +61,18 @@ func (s *Auth) GetCaptcha(ctx gtype.Context, ps gtype.Params) {
 		return
 	}
 
+	noiseCount := 0
+	showLineOptions := 0
 	var driver base64Captcha.Driver
 	switch filter.Mode {
 	case 0:
-		driver = base64Captcha.NewDriverString(filter.Height, filter.Width, 0, 0, filter.Length, captchaNumberSource, &filter.BackColor, []string{})
+		driver = base64Captcha.NewDriverString(filter.Height, filter.Width, noiseCount, showLineOptions, filter.Length, captchaNumberSource, &filter.BackColor, nil, []string{})
 	case 1:
-		driver = base64Captcha.NewDriverString(filter.Height, filter.Width, 0, 0, filter.Length, captchaLetterSource, &filter.BackColor, []string{})
+		driver = base64Captcha.NewDriverString(filter.Height, filter.Width, noiseCount, showLineOptions, filter.Length, captchaLetterSource, &filter.BackColor, nil, []string{})
 	case 2:
-		driver = base64Captcha.NewDriverMath(filter.Height, filter.Width, 0, 0, &filter.BackColor, []string{})
+		driver = base64Captcha.NewDriverMath(filter.Height, filter.Width, noiseCount, showLineOptions, &filter.BackColor, nil, []string{})
 	default:
-		driver = base64Captcha.NewDriverString(filter.Height, filter.Width, 0, 0, filter.Length, captchaLetterNumberSource, &filter.BackColor, []string{})
+		driver = base64Captcha.NewDriverString(filter.Height, filter.Width, noiseCount, showLineOptions, filter.Length, captchaLetterNumberSource, &filter.BackColor, nil, []string{})
 	}
 
 	captcha := base64Captcha.NewCaptcha(driver, s.captchaStore)
