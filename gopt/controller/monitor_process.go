@@ -5,6 +5,7 @@ import (
 	"github.com/csby/gmonitor"
 	"github.com/csby/gwsf/gmodel"
 	"github.com/csby/gwsf/gtype"
+	"strings"
 )
 
 func (s *Monitor) GetProcessInfo(ctx gtype.Context, ps gtype.Params) {
@@ -22,6 +23,21 @@ func (s *Monitor) GetProcessInfo(ctx gtype.Context, ps gtype.Params) {
 	if err != nil {
 		ctx.Error(gtype.ErrInternal, err)
 		return
+	}
+	if len(info.Cmdline) > 0 {
+		if info.Cmdline == info.Name || info.Cmdline == info.Exe {
+			info.Cmdline = ""
+		} else {
+			prefix := fmt.Sprintf("%s ", info.Exe)
+			if strings.Index(info.Cmdline, prefix) == 0 {
+				info.Cmdline = strings.TrimLeft(info.Cmdline, prefix)
+			} else {
+				prefix = fmt.Sprintf("%s ", info.Name)
+				if strings.Index(info.Cmdline, prefix) == 0 {
+					info.Cmdline = strings.TrimLeft(info.Cmdline, prefix)
+				}
+			}
+		}
 	}
 
 	ctx.Success(info)
