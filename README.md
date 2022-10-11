@@ -48,7 +48,7 @@ func (c *conn) serve(ctx context.Context) {
 
 ...
 
-func (h initNPNRequest) ServeHTTP(rw ResponseWriter, req *Request) {
+func (h initALPNRequest) ServeHTTP(rw ResponseWriter, req *Request) {
 	...
 	if h.c.ProxyRemoteAddr != "" {
 		req.RemoteAddr = h.c.ProxyRemoteAddr

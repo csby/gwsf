@@ -3,6 +3,9 @@ package controller
 import (
 	"encoding/json"
 	"github.com/csby/gwsf/gcfg"
+	"github.com/csby/gwsf/gcloud"
+	"github.com/csby/gwsf/gmodel"
+	"github.com/csby/gwsf/gnode"
 	"github.com/csby/gwsf/gtype"
 	"github.com/gorilla/websocket"
 	"net/http"
@@ -22,7 +25,8 @@ func NewWebsocket(log gtype.Log, cfg *gcfg.Config, db gtype.TokenDatabase, chs g
 
 	if chs != nil {
 		chs.SetListener(nil, instance.onChannelRemoved)
-		//chs.AddReader(instance.onChannelRead)
+		chs.AddReader(instance.onChannelRead)
+		chs.AddFilter(instance.onChannelFilter)
 	}
 
 	return instance
@@ -74,8 +78,8 @@ func (s *Websocket) Notify(ctx gtype.Context, ps gtype.Params) {
 	go func(wg *sync.WaitGroup, conn *websocket.Conn, ch gtype.SocketChannel) {
 		defer wg.Done()
 		defer func() {
-			if err := recover(); err != nil {
-				s.LogError("notify subscribe socket send message error:", err)
+			if re := recover(); re != nil {
+				s.LogError("notify subscribe socket send message error:", re)
 			}
 			stopRead <- true
 		}()
@@ -99,8 +103,8 @@ func (s *Websocket) Notify(ctx gtype.Context, ps gtype.Params) {
 	go func(wg *sync.WaitGroup, conn *websocket.Conn, ch gtype.SocketChannel) {
 		defer wg.Done()
 		defer func() {
-			if err := recover(); err != nil {
-				s.LogError("notify subscribe socket send message error:", err)
+			if re := recover(); re != nil {
+				s.LogError("notify subscribe socket send message error:", re)
 			}
 			stopWrite <- true
 		}()
@@ -148,14 +152,8 @@ func (s *Websocket) NotifyDoc(doc gtype.Doc, method string, uri gtype.Uri) {
 	output := function.SetOutputAppendix("消息标识")
 	s.output.impl = output
 
-	item := &appendixItem{}
-	output.AddItem(item.Set(gtype.WSOptUserLogin, &gtype.OnlineUser{LoginTime: gtype.DateTime(time.Now())}))
-	output.AddItem(item.Set(gtype.WSOptUserLogout, gtype.NewGuid()))
-	output.AddItem(item.Set(gtype.WSOptUserOnline, nil))
-	output.AddItem(item.Set(gtype.WSOptUserOffline, nil))
-	output.AddItem(item.Set(gtype.WSSiteUpload, &gtype.WebApp{}))
-	output.AddItem(item.Set(gtype.WSRootSiteUploadFile, &gtype.SiteFile{UploadTime: gtype.DateTime(time.Now())}))
-	output.AddItem(item.Set(gtype.WSRootSiteDeleteFile, &gtype.SiteFileFilter{}))
+	s.appendInput(input)
+	s.appendOutput(output)
 }
 
 func (s *Websocket) checkOrigin(r *http.Request) bool {
@@ -188,8 +186,73 @@ func (s *Websocket) onChannelRead(message *gtype.SocketMessage, channel gtype.So
 		return
 	}
 
-	channel.Container().Write(&gtype.SocketMessage{
-		ID:   message.ID,
-		Data: message.Data,
-	}, channel.Token())
+	switch message.ID {
+	case gtype.WSNetworkThroughput, gtype.WSCpuUsage, gtype.WSMemUsage:
+		{
+			data := false
+			err := message.GetData(&data)
+			if err != nil {
+				break
+			}
+			channel.Subscribe(message.ID, data)
+		}
+		break
+	}
+}
+
+func (s *Websocket) onChannelFilter(message *gtype.SocketMessage, channel gtype.SocketChannel, token *gtype.Token) bool {
+	if message == nil || channel == nil {
+		return false
+	}
+
+	switch message.ID {
+	case gtype.WSNetworkThroughput, gtype.WSCpuUsage, gtype.WSMemUsage:
+		count := channel.Subscription(message.ID)
+		if count < 1 {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (s *Websocket) appendInput(v gtype.Appendix) {
+	if v == nil {
+		return
+	}
+
+	v.Add(gtype.WSNetworkThroughput, "WSNetworkThroughput", "网络吞吐量(是否订阅)", &gmodel.NotifySubscription{ID: gtype.WSNetworkThroughput, Data: true})
+	v.Add(gtype.WSCpuUsage, "WSCpuUsage", "CPU使用率(是否订阅)", &gmodel.NotifySubscription{ID: gtype.WSCpuUsage, Data: true})
+	v.Add(gtype.WSMemUsage, "WSMemUsage", "内存使用率(是否订阅)", &gmodel.NotifySubscription{ID: gtype.WSMemUsage, Data: true})
+}
+
+func (s *Websocket) appendOutput(v gtype.Appendix) {
+	if v == nil {
+		return
+	}
+
+	item := &appendixItem{}
+	v.AddItem(item.Set(gtype.WSOptUserLogin, &gtype.OnlineUser{LoginTime: gtype.DateTime(time.Now())}))
+	v.AddItem(item.Set(gtype.WSOptUserLogout, gtype.NewGuid()))
+	v.AddItem(item.Set(gtype.WSOptUserOnline, nil))
+	v.AddItem(item.Set(gtype.WSOptUserOffline, nil))
+	v.AddItem(item.Set(gtype.WSSiteUpload, &gtype.WebApp{}))
+	v.AddItem(item.Set(gtype.WSRootSiteUploadFile, &gtype.SiteFile{UploadTime: gtype.DateTime(time.Now())}))
+	v.AddItem(item.Set(gtype.WSRootSiteDeleteFile, &gtype.SiteFileFilter{}))
+
+	v.AddItem(item.Set(gtype.WSNodeForwardTcpStart, &gtype.ForwardInfo{}))
+	v.AddItem(item.Set(gtype.WSNodeForwardTcpEnd, &gtype.ForwardId{}))
+
+	v.AddItem(item.Set(gtype.WSNodeRegister, &gcloud.Node{}))
+	v.AddItem(item.Set(gtype.WSNodeRevoke, &gcloud.NodeDelete{}))
+	v.AddItem(item.Set(gtype.WSNodeModify, &gcloud.NodeModify{}))
+	v.AddItem(item.Set(gtype.WSNodeInstanceOnline, &gcloud.NodeInstance{}))
+	v.AddItem(item.Set(gtype.WSNodeInstanceOffline, &gcloud.NodeInstance{}))
+
+	v.AddItem(item.Set(gtype.WSNodeOnlineStateChanged, &gnode.NodeOnlineState{}))
+	v.AddItem(item.Set(gtype.WSNodeFwdInputListenSvcState, &gtype.ForwardState{}))
+
+	v.AddItem(item.Set(gtype.WSNetworkThroughput, &gmodel.MonitorNetworkIOThroughputArgument{}))
+	v.AddItem(item.Set(gtype.WSCpuUsage, &gmodel.MonitorCpuPercent{}))
+	v.AddItem(item.Set(gtype.WSMemUsage, &gmodel.MonitorMemoryPercent{}))
 }

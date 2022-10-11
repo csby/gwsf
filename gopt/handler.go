@@ -327,6 +327,8 @@ func (s *innerHandler) mapApi(router gtype.Router, path *gtype.Path) gtype.HttpH
 		s.service.DeleteNginxLog, s.service.DeleteNginxLogDoc)
 
 	// 系统服务-自定义
+	router.POST(path.Uri("/svc/custom/cfg/info/get"), tokenChecker,
+		s.service.GetCustomConfig, s.service.GetCustomConfigDoc)
 	router.POST(path.Uri("/svc/custom/shell/info"), tokenChecker,
 		s.service.GetCustomShellInfo, s.service.GetCustomShellInfoDoc)
 	router.POST(path.Uri("/svc/custom/shell/update"), tokenChecker,

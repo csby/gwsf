@@ -27,7 +27,7 @@ func NewConfig() *Config {
 				Enabled: false,
 				CloudServer: gcfg.Cloud{
 					Address: "",
-					Port:    3169,
+					Port:    6931,
 				},
 				Forward: gcfg.NodeFwd{
 					Enable: false,
@@ -56,7 +56,7 @@ func NewConfig() *Config {
 			},
 			Cloud: gcfg.Https{
 				Enabled:     false,
-				Port:        3169,
+				Port:        6931,
 				BehindProxy: false,
 				Cert: gcfg.Crt{
 					Ca: gcfg.CrtCa{
@@ -78,9 +78,9 @@ func NewConfig() *Config {
 				Opt: gcfg.SiteOpt{
 					Users: []*gcfg.SiteOptUser{
 						{
-							Account:  "Admin",
-							Password: "1",
-							Name:     "管理员",
+							Account:  "admin",
+							Password: "admin",
+							Name:     "内置管理员",
 						},
 					},
 				},
@@ -109,6 +109,10 @@ func NewConfig() *Config {
 			},
 			Sys: gcfg.System{
 				Svc: gcfg.Service{
+					Custom: gcfg.ServiceCustom{
+						DownloadTitle: "从github下载",
+						DownloadUrl:   "https://github.com/csby/gwsf-doc/releases",
+					},
 					Tomcats: []*gcfg.ServiceTomcat{},
 					Others:  []*gcfg.ServiceOther{},
 					Nginxes: []*gcfg.ServiceNginx{},

@@ -93,16 +93,19 @@ type SocketChannel interface {
 	Container() SocketChannelCollection
 	Write(message *SocketMessage)
 	Read() <-chan *SocketMessage
+	Subscribe(id int, whether bool)
+	Subscription(id int) int
 
 	getElement() *list.Element
 	close()
 }
 
 type innerSocketChannel struct {
-	channel   chan *SocketMessage
-	element   *list.Element
-	container *innerSocketChannelCollection
-	token     *Token
+	channel       chan *SocketMessage
+	element       *list.Element
+	container     *innerSocketChannelCollection
+	token         *Token
+	subscriptions map[int]int
 }
 
 func (s *innerSocketChannel) Token() *Token {
@@ -122,6 +125,30 @@ func (s *innerSocketChannel) Write(message *SocketMessage) {
 
 func (s *innerSocketChannel) Read() <-chan *SocketMessage {
 	return s.channel
+}
+
+func (s *innerSocketChannel) Subscribe(id int, whether bool) {
+	val, ok := s.subscriptions[id]
+	if ok {
+		if whether {
+			s.subscriptions[id] = val + 1
+		} else {
+			s.subscriptions[id] = val - 1
+		}
+	} else {
+		if whether {
+			s.subscriptions[id] = 1
+		}
+	}
+}
+
+func (s *innerSocketChannel) Subscription(id int) int {
+	val, ok := s.subscriptions[id]
+	if ok {
+		return val
+	} else {
+		return 0
+	}
 }
 
 func (s *innerSocketChannel) getElement() *list.Element {
@@ -307,6 +334,7 @@ func (s *innerSocketChannelCollection) NewChannel(token *Token) SocketChannel {
 	instance := &innerSocketChannel{container: s}
 	instance.channel = make(chan *SocketMessage, 1024)
 	instance.element = s.channels.PushBack(instance)
+	instance.subscriptions = make(map[int]int)
 	instance.token = token
 	if token != nil {
 		token.Usage++
@@ -463,7 +491,7 @@ func (s *innerSocketChannelCollection) AddFilter(filter func(message *SocketMess
 func (s *innerSocketChannelCollection) filter(message *SocketMessage, channel SocketChannel, token *Token) bool {
 	count := len(s.filters)
 	for i := 0; i < count; i++ {
-		filter := s.filters[0]
+		filter := s.filters[i]
 		if filter == nil {
 			continue
 		}

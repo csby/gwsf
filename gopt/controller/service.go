@@ -14,7 +14,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"runtime"
 	"time"
 )
 
@@ -295,11 +294,10 @@ func (s *Service) copyFile(source, dest string) (int64, error) {
 
 func (s *Service) getStatus(name string) (gtype.ServerStatus, error) {
 	cfg := &service.Config{}
-	if runtime.GOOS == "linux" {
-		cfg.Name = fmt.Sprintf("%s.service", name)
-	} else {
-		cfg.Name = name
-	}
+	cfg.Name = name
+	//if runtime.GOOS == "linux" {
+	//	cfg.Name = fmt.Sprintf("%s.service", name)
+	//}
 
 	svc, err := service.New(nil, cfg)
 	if err != nil {

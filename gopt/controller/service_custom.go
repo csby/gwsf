@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
+	"github.com/csby/gwsf/gcfg"
 	"github.com/csby/gwsf/gfile"
 	"github.com/csby/gwsf/gmodel"
 	"github.com/csby/gwsf/gtype"
@@ -18,6 +19,20 @@ import (
 	"strings"
 	"time"
 )
+
+func (s *Service) GetCustomConfig(ctx gtype.Context, ps gtype.Params) {
+	ctx.Success(&s.cfg.Sys.Svc.Custom)
+}
+
+func (s *Service) GetCustomConfigDoc(doc gtype.Doc, method string, uri gtype.Uri) {
+	catalog := s.createCatalog(doc, svcCatalogRoot, svcCatalogCustom)
+	function := catalog.AddFunction(method, uri, "获取服务配置信息")
+	function.SetOutputDataExample(gcfg.ServiceCustom{})
+	function.AddOutputError(gtype.ErrTokenEmpty)
+	function.AddOutputError(gtype.ErrTokenInvalid)
+	function.AddOutputError(gtype.ErrInternal)
+	function.AddOutputError(gtype.ErrInput)
+}
 
 func (s *Service) GetCustoms(ctx gtype.Context, ps gtype.Params) {
 	results := s.getCustoms()

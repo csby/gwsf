@@ -91,6 +91,7 @@ func (s *innerCloud) doConnect(uri, host string) {
 func (s *innerCloud) connect(uri, host string) {
 	websocketConn, _, err := s.dialer.Dial(uri, nil)
 	if err != nil {
+		s.LogDebug("node connect to cloud fail:", err)
 		return
 	}
 	defer func(conn io.Closer, h string) {
