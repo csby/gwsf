@@ -41,6 +41,7 @@ func (s *User) GetLoginAccount(ctx gtype.Context, ps gtype.Params) {
 		role = roleAdmin
 	}
 	ctx.Success(&gtype.LoginAccount{
+		Token:     token.ID,
 		Account:   token.UserAccount,
 		Name:      token.UserName,
 		LoginTime: gtype.DateTime(token.LoginTime),

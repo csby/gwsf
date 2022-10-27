@@ -14,6 +14,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -306,9 +307,16 @@ func (s *Service) getStatus(name string) (gtype.ServerStatus, error) {
 
 	status, err := svc.Status()
 	if err != nil {
-		if err == service.ErrNotInstalled {
+		if err == service.ErrNotInstalled || err.Error() == "the service is not installed" {
+			if strings.Contains(name, "@") {
+				return gtype.ServerStatusStopped, nil
+			}
 			return gtype.ServerStatusUnknown, nil
 		} else if err.Error() == "service in failed state" {
+			return gtype.ServerStatusStopped, nil
+		} else if err.Error() == "the service is not installed" {
+			return gtype.ServerStatusStopped, nil
+		} else if strings.Contains(name, "@") {
 			return gtype.ServerStatusStopped, nil
 		}
 		return gtype.ServerStatusUnknown, err

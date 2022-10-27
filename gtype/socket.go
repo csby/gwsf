@@ -101,6 +101,8 @@ type SocketChannel interface {
 }
 
 type innerSocketChannel struct {
+	subscriptionsMutex sync.RWMutex
+
 	channel       chan *SocketMessage
 	element       *list.Element
 	container     *innerSocketChannelCollection
@@ -128,6 +130,9 @@ func (s *innerSocketChannel) Read() <-chan *SocketMessage {
 }
 
 func (s *innerSocketChannel) Subscribe(id int, whether bool) {
+	s.subscriptionsMutex.Lock()
+	defer s.subscriptionsMutex.Unlock()
+
 	val, ok := s.subscriptions[id]
 	if ok {
 		if whether {
@@ -461,7 +466,7 @@ func (s *innerSocketChannelCollection) AddReader(reader func(message *SocketMess
 func (s *innerSocketChannelCollection) Read(message *SocketMessage, channel SocketChannel) {
 	count := len(s.readers)
 	for i := 0; i < count; i++ {
-		reader := s.readers[0]
+		reader := s.readers[i]
 		if reader == nil {
 			continue
 		}

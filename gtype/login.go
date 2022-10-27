@@ -39,6 +39,7 @@ func (s *LoginFilter) Check(captchaRequired bool) error {
 }
 
 type LoginAccount struct {
+	Token     string   `json:"token" note:"接口访问凭证"`
 	Account   string   `json:"account" note:"账号名称"`
 	Name      string   `json:"name" note:"用户姓名"`
 	LoginTime DateTime `json:"loginTime" note:"登录时间"`

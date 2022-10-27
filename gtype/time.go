@@ -44,6 +44,30 @@ func (t DateTime) String() string {
 	return time.Time(t).Format(timeFormat)
 }
 
+func (t DateTime) Year() int {
+	return time.Time(t).Year()
+}
+
+func (t DateTime) Month() time.Month {
+	return time.Time(t).Month()
+}
+
+func (t DateTime) Day() int {
+	return time.Time(t).Day()
+}
+
+func (t DateTime) Hour() int {
+	return time.Time(t).Hour()
+}
+
+func (t DateTime) Minute() int {
+	return time.Time(t).Minute()
+}
+
+func (t DateTime) Second() int {
+	return time.Time(t).Second()
+}
+
 func (t DateTime) Duration() string {
 	sb := &strings.Builder{}
 	duration := time.Now().Sub(time.Time(t))
@@ -87,6 +111,26 @@ func (t DateTime) Duration() string {
 	sb.WriteString(fmt.Sprintf("%d秒", seconds))
 
 	return sb.String()
+}
+
+func (t DateTime) Elapse(start DateTime) string {
+	end := time.Time(t)
+	now := time.Time(start)
+
+	nanosecond := end.Sub(now)
+	millisecond := nanosecond / time.Millisecond
+
+	hour := nanosecond / time.Hour
+	minute := (nanosecond - hour*time.Hour) / time.Minute
+	second := (nanosecond - hour*time.Hour - minute*time.Minute) / time.Second
+	millisecond = (nanosecond - hour*time.Hour - minute*time.Minute - second*time.Second) / time.Millisecond
+	elapse := fmt.Sprintf("%02d:%02d:%02d.%03d",
+		hour,
+		minute,
+		second,
+		millisecond)
+
+	return elapse
 }
 
 func (t *DateTime) ToDate(plusDays int) *time.Time {
