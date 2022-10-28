@@ -164,6 +164,12 @@ func (s *innerSocketChannel) close() {
 	close(s.channel)
 }
 
+type SocketWriter interface {
+	Write(message *SocketMessage, token *Token)
+	WriteMessage(message *SocketMessage, tokenId string) bool
+	WriteMsg(message *SocketMessage, filter SocketFilter) int
+}
+
 type SocketChannelCollection interface {
 	OnlineUsersByUserId(userId string) []*OnlineUser
 	OnlineUsers() []*OnlineUser
@@ -176,6 +182,7 @@ type SocketChannelCollection interface {
 	Write(message *SocketMessage, token *Token)
 	WriteMsg(message *SocketMessage, filter SocketFilter) int
 	WriteMessage(message *SocketMessage, tokenId string) bool
+	AddWriter(writer SocketWriter)
 	AddReader(reader func(message *SocketMessage, channel SocketChannel))
 	Read(message *SocketMessage, channel SocketChannel)
 	AddFilter(filter func(message *SocketMessage, channel SocketChannel, token *Token) bool)
@@ -184,6 +191,7 @@ type SocketChannelCollection interface {
 func NewSocketChannelCollection() SocketChannelCollection {
 	instance := &innerSocketChannelCollection{}
 	instance.channels = list.New()
+	instance.writers = make([]SocketWriter, 0)
 	instance.readers = make([]func(message *SocketMessage, channel SocketChannel), 0)
 	instance.filters = make([]func(message *SocketMessage, channel SocketChannel, token *Token) bool, 0)
 
@@ -194,6 +202,7 @@ type innerSocketChannelCollection struct {
 	sync.RWMutex
 
 	channels       *list.List
+	writers        []SocketWriter
 	readers        []func(message *SocketMessage, channel SocketChannel)
 	filters        []func(message *SocketMessage, channel SocketChannel, token *Token) bool
 	newListener    func(channel SocketChannel)
@@ -392,6 +401,16 @@ func (s *innerSocketChannelCollection) Write(message *SocketMessage, token *Toke
 
 		e = e.Next()
 	}
+
+	c := len(s.writers)
+	for i := 0; i < c; i++ {
+		w := s.writers[i]
+		if w == nil {
+			continue
+		}
+
+		w.Write(message, token)
+	}
 }
 
 func (s *innerSocketChannelCollection) WriteMessage(message *SocketMessage, tokenId string) bool {
@@ -416,6 +435,16 @@ func (s *innerSocketChannelCollection) WriteMessage(message *SocketMessage, toke
 		}
 
 		e = e.Next()
+	}
+
+	c := len(s.writers)
+	for i := 0; i < c; i++ {
+		w := s.writers[i]
+		if w == nil {
+			continue
+		}
+
+		w.WriteMessage(message, tokenId)
 	}
 
 	return false
@@ -449,7 +478,28 @@ func (s *innerSocketChannelCollection) WriteMsg(message *SocketMessage, filter S
 		e = e.Next()
 	}
 
+	c := len(s.writers)
+	for i := 0; i < c; i++ {
+		w := s.writers[i]
+		if w == nil {
+			continue
+		}
+
+		w.WriteMsg(message, filter)
+	}
+
 	return count
+}
+
+func (s *innerSocketChannelCollection) AddWriter(writer SocketWriter) {
+	if writer == nil {
+		return
+	}
+
+	s.Lock()
+	defer s.Unlock()
+
+	s.writers = append(s.writers, writer)
 }
 
 func (s *innerSocketChannelCollection) AddReader(reader func(message *SocketMessage, channel SocketChannel)) {
