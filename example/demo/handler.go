@@ -43,6 +43,10 @@ func (s *Handler) BeforeRouting(ctx gtype.Context) {
 	}
 }
 
+func (s *Handler) AfterInput(ctx gtype.Context) {
+
+}
+
 func (s *Handler) AfterRouting(ctx gtype.Context) {
 
 }

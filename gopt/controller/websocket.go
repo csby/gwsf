@@ -69,6 +69,8 @@ func (s *Websocket) Notify(ctx gtype.Context, ps gtype.Params) {
 	s.wsChannels.Write(&gtype.SocketMessage{ID: gtype.WSOptUserOnline}, nil)
 	defer s.wsChannels.Write(&gtype.SocketMessage{ID: gtype.WSOptUserOffline}, nil)
 
+	ctx.FireAfterInput()
+
 	waitGroup := &sync.WaitGroup{}
 	stopWrite := make(chan bool, 2)
 	stopRead := make(chan bool, 2)
@@ -232,6 +234,11 @@ func (s *Websocket) appendOutput(v gtype.Appendix) {
 	}
 
 	item := &appendixItem{}
+	v.AddItem(item.Set(gtype.WSClusterNodeStatusChanged, &gtype.ClusterNodeStatus{}))
+
+	v.AddItem(item.Set(gtype.WSHeartbeatConnected, &gtype.Heartbeat{}))
+	v.AddItem(item.Set(gtype.WSHeartbeatDisconnected, gtype.NewGuid()))
+
 	v.AddItem(item.Set(gtype.WSOptUserLogin, &gtype.OnlineUser{LoginTime: gtype.DateTime(time.Now())}))
 	v.AddItem(item.Set(gtype.WSOptUserLogout, gtype.NewGuid()))
 	v.AddItem(item.Set(gtype.WSOptUserOnline, nil))

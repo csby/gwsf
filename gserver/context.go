@@ -32,10 +32,12 @@ type context struct {
 	rip          string
 	result       int
 	enterTime    time.Time
-	leaveTime    time.Time
+	leaveTime    *time.Time
 	keys         map[string]interface{}
 
 	clientOrganizationalUnit string
+
+	afterInput func(ctx *context)
 }
 
 func (s *context) Request() *http.Request {
@@ -65,6 +67,10 @@ func (s *context) GetJson(v interface{}) error {
 	}
 	s.inputFormat = gtype.ArgsFmtJson
 
+	if s.afterInput != nil {
+		go s.afterInput(s)
+	}
+
 	return err
 }
 
@@ -78,6 +84,10 @@ func (s *context) GetXml(v interface{}) error {
 	s.inputFormat = gtype.ArgsFmtXml
 
 	err = xml.Unmarshal(bodyData, v)
+
+	if s.afterInput != nil {
+		go s.afterInput(s)
+	}
 
 	return err
 }
@@ -334,11 +344,15 @@ func (s *context) GetOutputFormat() int {
 	return s.outputFormat
 }
 
+func (s *context) GetOutputCode() *int {
+	return s.outputCode
+}
+
 func (s *context) EnterTime() time.Time {
 	return s.enterTime
 }
 
-func (s *context) LeaveTime() time.Time {
+func (s *context) LeaveTime() *time.Time {
 	return s.leaveTime
 }
 
@@ -405,4 +419,12 @@ func (s *context) toString(a []interface{}) string {
 	}
 
 	return sb.String()
+}
+
+func (s *context) FireAfterInput() {
+	if s.afterInput == nil {
+		return
+	}
+
+	go s.afterInput(s)
 }

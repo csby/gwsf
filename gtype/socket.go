@@ -7,6 +7,11 @@ import (
 )
 
 const (
+	WSClusterNodeStatusChanged = 11 // 集群节点状态改变
+
+	WSHeartbeatConnected    = 21 // 心跳检测已连接
+	WSHeartbeatDisconnected = 22 // 心跳检测断开连接
+
 	WSOptUserLogin   = 101 // 用户登陆
 	WSOptUserLogout  = 102 // 用户注销
 	WSOptUserOnline  = 103 // 用户上线
@@ -71,8 +76,9 @@ const (
 )
 
 type SocketMessage struct {
-	ID   int         `json:"id" note:"消息标识"`
-	Data interface{} `json:"data" note:"消息内容, 结构随id而定(详见附录appendix)"`
+	ID      int         `json:"id" note:"消息标识"`
+	Forward bool        `json:"-" note:"是否转发"`
+	Data    interface{} `json:"data" note:"消息内容, 结构随id而定(详见附录appendix)"`
 }
 
 func (s *SocketMessage) GetData(v interface{}) error {
@@ -86,6 +92,22 @@ func (s *SocketMessage) GetData(v interface{}) error {
 
 type SocketFilter interface {
 	Ignored(token *Token) bool
+}
+
+type SocketTokenFilter struct {
+	Token string
+}
+
+func (s *SocketTokenFilter) Ignored(token *Token) bool {
+	if token == nil {
+		return true
+	}
+
+	if token.ID == s.Token {
+		return false
+	}
+
+	return true
 }
 
 type SocketChannel interface {
@@ -171,6 +193,7 @@ type SocketWriter interface {
 }
 
 type SocketChannelCollection interface {
+	GetChannel(id string) SocketChannel
 	OnlineUsersByUserId(userId string) []*OnlineUser
 	OnlineUsers() []*OnlineUser
 	OnlineNodes() []*Node
@@ -208,6 +231,29 @@ type innerSocketChannelCollection struct {
 	newListener    func(channel SocketChannel)
 	removeListener func(channel SocketChannel)
 	beforeWrite    func(message *SocketMessage, channel SocketChannel)
+}
+
+func (s *innerSocketChannelCollection) GetChannel(id string) SocketChannel {
+	s.Lock()
+	defer s.Unlock()
+
+	for e := s.channels.Front(); e != nil; {
+		ev, ok := e.Value.(SocketChannel)
+		if !ok {
+			break
+		}
+
+		token := ev.Token()
+		if token != nil {
+			if token.ID == id {
+				return ev
+			}
+		}
+
+		e = e.Next()
+	}
+
+	return nil
 }
 
 func (s *innerSocketChannelCollection) OnlineUsersByUserId(userId string) []*OnlineUser {

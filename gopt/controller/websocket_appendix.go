@@ -56,6 +56,14 @@ func (s *appendixItem) Set(id int, example interface{}) *appendixItem {
 
 func (s *appendixItem) getNameAndNote(id int) (string, string) {
 	switch id {
+	case gtype.WSClusterNodeStatusChanged:
+		return "WSClusterNodeStatusChanged", "集群节点状态改变"
+
+	case gtype.WSHeartbeatConnected:
+		return "WSHeartbeatConnected", "心跳检测已连接"
+	case gtype.WSHeartbeatDisconnected:
+		return "WSHeartbeatDisconnected", "心跳检测断开连接"
+
 	case gtype.WSOptUserLogin:
 		return "WSOptUserLogin", "用户登陆"
 	case gtype.WSOptUserLogout:

@@ -12,6 +12,31 @@ const (
 	zoneFormat = "2006-01-02T15:04:05.000Z"
 )
 
+func GetTimeLayout(v string) string {
+	zoneIndex := strings.Index(v, "Z")
+	if zoneIndex < 0 {
+		zoneIndex = strings.Index(v, "+")
+	}
+	if zoneIndex < 0 {
+		return ""
+	}
+	nanoIndex := strings.Index(v, ".")
+	if zoneIndex < 0 {
+		return ""
+	}
+
+	sb := &strings.Builder{}
+	sb.WriteString(`"`)
+	sb.WriteString("2006-01-02T15:04:05.")
+	c := zoneIndex - nanoIndex - 1
+	for i := 0; i < c; i++ {
+		sb.WriteString("0")
+	}
+	sb.WriteString(v[zoneIndex:])
+
+	return sb.String()
+}
+
 type DateTime time.Time
 
 func (t *DateTime) UnmarshalJSON(data []byte) (err error) {
@@ -26,6 +51,15 @@ func (t *DateTime) UnmarshalJSON(data []byte) (err error) {
 		now, err = time.ParseInLocation(`"`+zoneFormat+`"`, string(data), time.UTC)
 	} else {
 		now, err = time.Parse(time.RFC3339, string(data))
+		if err != nil {
+			now, err = time.Parse(time.RFC3339Nano, string(data))
+			if err != nil {
+				layout := GetTimeLayout(string(data))
+				if len(layout) > 0 {
+					now, err = time.ParseInLocation(layout, string(data), time.UTC)
+				}
+			}
+		}
 	}
 
 	*t = DateTime(now)

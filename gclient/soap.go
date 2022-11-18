@@ -26,23 +26,25 @@ type SoapBody struct {
 
 // <?xml version="1.0" encoding="utf-8"?>
 // <soap:Envelope>
-//   <soap:Body>
-//     <MethodResponse>
-//       <MethodResult>
-//         <ID>1112</ID>
-//         <Name>Ktp</Name>
-//       </MethodResult>
-//     </MethodResponse>
-//     <soap:Fault>
-//       <soap:Code>
-//         <soap:Value>soap:Sender</soap:Value>
-//       </soap:Code>
-//       <soap:Reason>
-//         <soap:Text xml:lang="en">Unable to handle request without a valid action parameter.</soap:Text>
-//       </soap:Reason>
-//       <soap:Detail />
-//     </soap:Fault>
-//   </soap:Body>
+//
+//	<soap:Body>
+//	  <MethodResponse>
+//	    <MethodResult>
+//	      <ID>1112</ID>
+//	      <Name>Ktp</Name>
+//	    </MethodResult>
+//	  </MethodResponse>
+//	  <soap:Fault>
+//	    <soap:Code>
+//	      <soap:Value>soap:Sender</soap:Value>
+//	    </soap:Code>
+//	    <soap:Reason>
+//	      <soap:Text xml:lang="en">Unable to handle request without a valid action parameter.</soap:Text>
+//	    </soap:Reason>
+//	    <soap:Detail />
+//	  </soap:Fault>
+//	</soap:Body>
+//
 // </soap:Envelope>
 type SoapResult struct {
 	XMLName struct{} `xml:"Envelope"`

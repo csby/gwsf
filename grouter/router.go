@@ -219,7 +219,8 @@ func (s *Router) Handle(method string, uri gtype.Uri, before, handle gtype.HttpH
 // of the Router's NotFound handler.
 // To use the operating system's file system implementation,
 // use http.Dir:
-//     router.ServeFiles("/src/*filepath", http.Dir("/var/www"))
+//
+//	router.ServeFiles("/src/*filepath", http.Dir("/var/www"))
 func (s *Router) ServeFiles(uri gtype.Uri, preHandle gtype.HttpHandle, root http.FileSystem, docHandle gtype.DocHandle) {
 	path := uri.Path()
 	if len(path) < 10 || path[len(path)-10:] != "/*filepath" {

@@ -5,6 +5,7 @@ import (
 	"github.com/csby/gsecurity/gcrt"
 	"github.com/csby/gwsf/gcfg"
 	"github.com/csby/gwsf/gdoc"
+	"github.com/csby/gwsf/gheartbeat"
 	"github.com/csby/gwsf/gopt"
 	"github.com/csby/gwsf/grouter"
 	"github.com/csby/gwsf/gtype"
@@ -54,6 +55,9 @@ func newHandler(log gtype.Log, cfg *gcfg.Config, hdl gtype.Handler) (*handler, e
 				hdl.ExtendOptApi(instance.router, path, preHandle, opt)
 			}
 		})
+
+	htHandler := gheartbeat.NewHandler(log, cfg, otpHandler.SocketChannels())
+	htHandler.Init(instance.router, otpHandler.ApiPath(), otpHandler.TokenChecker())
 
 	if hdl != nil {
 		hdl.InitRouting(instance.router)
@@ -109,7 +113,8 @@ func (s *handler) ServeHTTP(w http.ResponseWriter, r *http.Request, caCrt *gcrt.
 		", token=", ctx.token)
 
 	defer func(ctx *context) {
-		ctx.leaveTime = time.Now()
+		leaveTime := time.Now()
+		ctx.leaveTime = &leaveTime
 		go s.afterRouting(ctx)
 	}(ctx)
 
@@ -143,6 +148,20 @@ func (s *handler) beforeRouting(ctx *context) {
 	s.handler.BeforeRouting(ctx)
 }
 
+func (s *handler) afterInput(ctx *context) {
+	if s.handler == nil {
+		return
+	}
+
+	defer func() {
+		if err := recover(); err != nil {
+			s.LogError("afterInput", err)
+		}
+	}()
+
+	s.handler.AfterInput(ctx)
+}
+
 func (s *handler) afterRouting(ctx *context) {
 	if s.handler == nil {
 		return
@@ -160,6 +179,7 @@ func (s *handler) afterRouting(ctx *context) {
 func (s *handler) newContext(w http.ResponseWriter, r *http.Request) *context {
 	ctx := &context{response: w, request: r, schema: "http"}
 	ctx.method = r.Method
+	ctx.afterInput = s.afterInput
 	if r.TLS != nil {
 		ctx.schema = "https"
 		if len(r.TLS.PeerCertificates) > 0 {

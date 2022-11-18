@@ -27,6 +27,7 @@ type ServerInfo struct {
 }
 
 type ServerRole struct {
+	Cluster bool `json:"cluster" note:"是否集群"`
 	Cloud   bool `json:"cloud" note:"是否云端"`
 	Node    bool `json:"node" note:"是否节点"`
 	Service bool `json:"service" note:"是否服务管理"`

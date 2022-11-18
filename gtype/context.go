@@ -25,7 +25,7 @@ type Context interface {
 	ErrorWithData(data interface{}, err Error, detail ...interface{})
 
 	EnterTime() time.Time
-	LeaveTime() time.Time
+	LeaveTime() *time.Time
 	Method() string
 	Schema() string
 	Host() string
@@ -42,6 +42,7 @@ type Context interface {
 	GetInputFormat() int
 	GetOutput() []byte
 	GetOutputFormat() int
+	GetOutputCode() *int
 	IsError() bool
 	SetLog(v bool)
 	GetLog() bool
@@ -52,4 +53,5 @@ type Context interface {
 
 	ClientOrganization() string
 	SetClientOrganization(ou string)
+	FireAfterInput()
 }

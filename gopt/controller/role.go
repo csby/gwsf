@@ -8,14 +8,16 @@ import (
 type Role struct {
 	controller
 
-	isCloud bool
-	isNode  bool
+	isCluster bool
+	isCloud   bool
+	isNode    bool
 }
 
-func NewRole(log gtype.Log, cfg *gcfg.Config, isCloud, isNode bool) *Role {
+func NewRole(log gtype.Log, cfg *gcfg.Config, isCluster, isCloud, isNode bool) *Role {
 	instance := &Role{}
 	instance.SetLog(log)
 	instance.cfg = cfg
+	instance.isCluster = isCluster
 	instance.isCloud = isCloud
 	instance.isNode = isNode
 
@@ -24,6 +26,7 @@ func NewRole(log gtype.Log, cfg *gcfg.Config, isCloud, isNode bool) *Role {
 
 func (s *Role) GetServerRole(ctx gtype.Context, ps gtype.Params) {
 	ctx.Success(&gtype.ServerRole{
+		Cluster: s.isCluster,
 		Cloud:   s.isCloud,
 		Node:    s.isNode,
 		Service: s.cfg.Sys.Svc.Enabled,

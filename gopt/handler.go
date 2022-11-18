@@ -11,6 +11,9 @@ type Handler interface {
 	Init(router gtype.Router,
 		setup func(opt gtype.Option),
 		api func(path *gtype.Path, preHandle gtype.HttpHandle, opt gtype.Opt))
+	ApiPath() *gtype.Path
+	TokenChecker() gtype.HttpHandle
+	SocketChannels() gtype.SocketChannelCollection
 }
 
 func NewHandler(log gtype.Log, cfg *gcfg.Config, webPrefix, apiPrefix, docWebPrefix string) Handler {
@@ -41,6 +44,7 @@ type innerHandler struct {
 	svcMgr  gtype.SvcUpdMgr
 
 	preHandle gtype.HttpHandle
+	isCluster bool
 	isCloud   bool
 	isNode    bool
 
@@ -58,6 +62,8 @@ type innerHandler struct {
 	database  *controller.Database
 	websocket *controller.Websocket
 	proxy     *controller.Proxy
+
+	tokenChecker gtype.HttpHandle
 }
 
 func (s *innerHandler) Init(router gtype.Router,
@@ -78,10 +84,16 @@ func (s *innerHandler) Init(router gtype.Router,
 	if api != nil {
 		api(s.apiPath, tokenChecker, s.websocket)
 	}
+
+	s.tokenChecker = tokenChecker
 }
 
 func (s *innerHandler) SetTokenChecker(v gtype.HttpHandle) {
 	s.preHandle = v
+}
+
+func (s *innerHandler) SetCluster(v bool) {
+	s.isCluster = v
 }
 
 func (s *innerHandler) SetCloud(v bool) {
@@ -92,11 +104,23 @@ func (s *innerHandler) SetNode(v bool) {
 	s.isNode = v
 }
 
+func (s *innerHandler) TokenChecker() gtype.HttpHandle {
+	return s.tokenChecker
+}
+
+func (s *innerHandler) SocketChannels() gtype.SocketChannelCollection {
+	return s.wsc
+}
+
+func (s *innerHandler) ApiPath() *gtype.Path {
+	return s.apiPath
+}
+
 func (s *innerHandler) mapApi(router gtype.Router, path *gtype.Path) gtype.HttpHandle {
 	s.auth = controller.NewAuth(s.GetLog(), s.cfg, s.dbToken, s.wsc)
 	s.user = controller.NewUser(s.GetLog(), s.cfg, s.dbToken, s.wsc)
 	s.site = controller.NewSite(s.GetLog(), s.cfg, s.dbToken, s.wsc, s.docWebPrefix, s.webPath.Prefix)
-	s.role = controller.NewRole(s.GetLog(), s.cfg, s.isCloud, s.isNode)
+	s.role = controller.NewRole(s.GetLog(), s.cfg, s.isCluster, s.isCloud, s.isNode)
 	s.monitor = controller.NewMonitor(s.GetLog(), s.cfg, s.wsc)
 	s.service = controller.NewService(s.GetLog(), s.cfg, s.svcMgr, s.wsc)
 	s.update = controller.NewUpdate(s.GetLog(), s.cfg, s.svcMgr)
