@@ -25,6 +25,9 @@ type SvcArgs struct {
 	Stop      bool
 	Restart   bool
 	Pkg       bool
+	Stat      bool
+	Folder    string
+	Suffix    string
 }
 
 func (s *SvcArgs) Parse(key, value string) {
@@ -48,6 +51,12 @@ func (s *SvcArgs) Parse(key, value string) {
 		s.Restart = true
 	} else if key == strings.ToLower("-pkg") {
 		s.Pkg = true
+	} else if key == strings.ToLower("-stat") {
+		s.Stat = true
+	} else if key == strings.ToLower("-folder") {
+		s.Folder = value
+	} else if key == strings.ToLower("-suffix") {
+		s.Suffix = value
 	}
 }
 
@@ -62,6 +71,9 @@ func (s *SvcArgs) ShowHelp(cfgFolder, cfgName string) {
 	s.ShowLine("  -stop:", "[可选]停止服务")
 	s.ShowLine("  -restart:", "[可选]重启服务")
 	s.ShowLine("  -pkg:", "[可选]打包程序")
+	s.ShowLine("  -stat:", "[可选]统计代码行数, 通过-folder指定目录及-suffix指定文件后缀")
+	s.ShowLine("  -folder:", "[可选]文件夹")
+	s.ShowLine("  -suffix:", "[可选]后缀")
 }
 
 func (s *SvcArgs) ShowLine(label, value string) {

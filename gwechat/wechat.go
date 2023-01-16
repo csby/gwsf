@@ -107,7 +107,7 @@ func GetLoginPage(appId, redirectUri, state string) (*LoginPage, error) {
 
 	info := &LoginPage{}
 	info.State = state
-	info.Url = fmt.Sprintf("%s?appid=%s&redirect_uri=%s&response_type=%s&&scope=%s&state=%s",
+	info.Url = fmt.Sprintf("%s?appid=%s&redirect_uri=%s&response_type=%s&&scope=%s&state=%s#wechat_redirect",
 		urlAuth,
 		appId,
 		url.QueryEscape(redirectUri),
