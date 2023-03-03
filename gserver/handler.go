@@ -11,6 +11,7 @@ import (
 	"github.com/csby/gwsf/gtype"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -137,6 +138,11 @@ func (s *handler) ServeHTTP(w http.ResponseWriter, r *http.Request, caCrt *gcrt.
 		return
 	}
 
+	s.serve(ctx)
+	if ctx.IsHandled() {
+		return
+	}
+
 	s.router.Serve(ctx)
 }
 
@@ -176,12 +182,27 @@ func (s *handler) afterRouting(ctx *context) {
 	s.handler.AfterRouting(ctx)
 }
 
+func (s *handler) serve(ctx *context) {
+	if s.handler == nil {
+		return
+	}
+
+	s.handler.Serve(ctx)
+}
+
 func (s *handler) newContext(w http.ResponseWriter, r *http.Request) *context {
-	ctx := &context{response: w, request: r, schema: "http"}
+	ctx := &context{response: w, request: r}
 	ctx.method = r.Method
 	ctx.afterInput = s.afterInput
+	ctx.schema = r.Header.Get("X-Forwarded-Proto")
+	if len(ctx.schema) < 1 {
+		if r.TLS != nil {
+			ctx.schema = "https"
+		} else {
+			ctx.schema = "http"
+		}
+	}
 	if r.TLS != nil {
-		ctx.schema = "https"
 		if len(r.TLS.PeerCertificates) > 0 {
 			clientCrt := &gcrt.Crt{}
 			if clientCrt.FromConnectionState(r.TLS) == nil {
@@ -189,18 +210,23 @@ func (s *handler) newContext(w http.ResponseWriter, r *http.Request) *context {
 			}
 		}
 	}
+	ctx.host = r.Header.Get("X-Forwarded-Host")
+	if len(ctx.host) < 1 {
+		ctx.host = r.Host
+	}
 	ctx.keys = make(map[string]interface{})
 	ctx.log = false
 	ctx.enterTime = time.Now()
 	ctx.path = r.URL.Path
 	ctx.rid = s.rid.New()
-	ctx.rip, _, _ = net.SplitHostPort(r.RemoteAddr)
-	ctx.token = r.Header.Get("token")
-	if ctx.token == "" {
-		if r.Method == "GET" {
-			ctx.token = r.FormValue("token")
-		}
+	ctx.rip = r.Header.Get("X-Forwarded-For")
+	if len(ctx.rip) < 1 {
+		ctx.rip, _, _ = net.SplitHostPort(r.RemoteAddr)
 	}
+	ctx.forwardFrom = r.Header.Get("X-Forwarded-From")
+	ctx.token = r.Header.Get("token")
+	ctx.node = r.Header.Get("node")
+	ctx.instance = r.Header.Get("instance")
 	if len(r.URL.Query()) > 0 {
 		ctx.queries = make(gtype.QueryCollection, 0)
 		for k, v := range r.URL.Query() {
@@ -209,6 +235,23 @@ func (s *handler) newContext(w http.ResponseWriter, r *http.Request) *context {
 				query.Value = v[0]
 			}
 			ctx.queries = append(ctx.queries, query)
+
+			lk := strings.ToLower(k)
+			if len(ctx.token) < 1 {
+				if strings.Compare(lk, "token") == 0 {
+					ctx.token = query.Value
+				}
+			}
+			if len(ctx.node) < 1 {
+				if strings.Compare(lk, "node") == 0 {
+					ctx.node = query.Value
+				}
+			}
+			if len(ctx.instance) < 1 {
+				if strings.Compare(lk, "instance") == 0 {
+					ctx.instance = query.Value
+				}
+			}
 		}
 	}
 

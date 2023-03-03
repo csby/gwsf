@@ -146,10 +146,16 @@ func (s *Site) UploadRootFile(ctx gtype.Context, ps gtype.Params) {
 		return
 	}
 
+	query := ""
+	forwardFrom := ctx.ForwardFrom()
+	if len(forwardFrom) > 0 {
+		query = fmt.Sprintf("?node=%s&instance=%s", ctx.Node(), ctx.Instance())
+	}
+
 	data := &gtype.SiteFile{
 		Name:       head.Filename,
 		UploadTime: gtype.DateTime(time.Now()),
-		Url:        fmt.Sprintf("%s://%s/%s", ctx.Schema(), ctx.Host(), url.PathEscape(head.Filename)),
+		Url:        fmt.Sprintf("%s://%s/%s%s", ctx.Schema(), ctx.Host(), url.PathEscape(head.Filename), query),
 	}
 
 	ctx.Success(data)

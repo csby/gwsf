@@ -24,13 +24,24 @@ func (s *Handler) BeforeRouting(ctx gtype.Context) {
 	}
 }
 
+func (s *Handler) AfterInput(ctx gtype.Context) {
+
+}
+
 func (s *Handler) AfterRouting(ctx gtype.Context) {
+
+}
+
+func (s *Handler) Serve(ctx gtype.Context) {
 
 }
 
 func (s *Handler) ExtendOptSetup(opt gtype.Option) {
 }
 
-func (s *Handler) ExtendOptApi(router gtype.Router, path *gtype.Path, preHandle gtype.HttpHandle, wsc gtype.SocketChannelCollection) {
+func (s *Handler) ExtendOptApi(router gtype.Router,
+	path *gtype.Path,
+	preHandle gtype.HttpHandle,
+	opt gtype.Opt) {
 
 }

@@ -51,6 +51,10 @@ func (s *Handler) AfterRouting(ctx gtype.Context) {
 
 }
 
+func (s *Handler) Serve(ctx gtype.Context) {
+
+}
+
 func (s *Handler) ExtendOptSetup(opt gtype.Option) {
 	if opt == nil {
 		return

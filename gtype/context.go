@@ -35,6 +35,9 @@ type Context interface {
 	SetHandled(v bool)
 	IsHandled() bool
 	Token() string
+	Node() string
+	Instance() string
+	ForwardFrom() string
 	RID() uint64
 	RIP() string
 	NewGuid() string

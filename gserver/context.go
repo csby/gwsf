@@ -12,13 +12,17 @@ import (
 )
 
 type context struct {
-	response http.ResponseWriter
-	request  *http.Request
-	method   string
-	schema   string
-	path     string
-	token    string
-	handled  bool
+	response    http.ResponseWriter
+	request     *http.Request
+	method      string
+	schema      string
+	host        string
+	path        string
+	token       string
+	node        string
+	instance    string
+	forwardFrom string
+	handled     bool
 
 	certificate  gtype.Certificate
 	queries      gtype.QueryCollection
@@ -278,11 +282,7 @@ func (s *context) Schema() string {
 }
 
 func (s *context) Host() string {
-	if s.request == nil {
-		return ""
-	}
-
-	return s.request.Host
+	return s.host
 }
 
 func (s *context) Path() string {
@@ -307,6 +307,18 @@ func (s *context) IsHandled() bool {
 
 func (s *context) Token() string {
 	return s.token
+}
+
+func (s *context) Node() string {
+	return s.node
+}
+
+func (s *context) Instance() string {
+	return s.instance
+}
+
+func (s *context) ForwardFrom() string {
+	return s.forwardFrom
 }
 
 func (s *context) GetQuery() []byte {
